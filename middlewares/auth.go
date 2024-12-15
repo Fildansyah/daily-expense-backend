@@ -6,7 +6,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"gorm.io/gorm"
 )
 
 const jwtSecretKey = "amat-sangat-rahasia"
@@ -27,7 +26,7 @@ func GenerateJWT(userID, email string) (string, error) {
 	return token.SignedString([]byte(jwtSecretKey))
 }
 
-func Authenticate(db *gorm.DB) fiber.Handler {
+func Authenticate() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Get the Authorization header
 		authHeader := c.Get("Authorization")

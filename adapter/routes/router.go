@@ -19,7 +19,7 @@ func InitRouter(app *fiber.App, db *gorm.DB) {
 	RegisterUserRoutes(publicGroup, userHandler)
 
 	protectedGroup := app.Group("/api")
-	protectedGroup.Use(middlewares.Authenticate(db))
+	protectedGroup.Use(middlewares.Authenticate())
 
 	//transaction type
 	transactionTypeRepo := transaction_type.NewTransactionTypeRepository(db)
