@@ -68,7 +68,7 @@ func (h *TransactionTypeHandler) DeleteTransactionType(c *fiber.Ctx) error {
 func (h *TransactionTypeHandler) GetAllTransactionTypes(c *fiber.Ctx) error {
 	result, err := h.service.GetAllTransactionTypes()
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
 	resp := make([]presenter.TransactionTypePresenter, len(result))
