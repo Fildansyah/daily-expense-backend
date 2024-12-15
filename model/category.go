@@ -24,5 +24,6 @@ type Category struct {
 	Name              CategoryNameEnum
 	TransactionTypeId string
 	TransactionTypes  TransactionType `gorm:"-"`
+	BgColor           string
 	Icon              string
 }
