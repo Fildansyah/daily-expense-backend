@@ -13,6 +13,10 @@ const (
 	Food           CategoryNameEnum = "FOOD"
 	Shopping       CategoryNameEnum = "SHOPPING"
 	Transportation CategoryNameEnum = "TRANSPORTATION"
+	Salary         CategoryNameEnum = "SALARY"
+	Award          CategoryNameEnum = "AWARD"
+	Bonus          CategoryNameEnum = "BONUS"
+	Investment     CategoryNameEnum = "INVESTMENT"
 	Other          CategoryNameEnum = "OTHER"
 )
 
@@ -21,9 +25,9 @@ var CategoryNameEnumValues = []CategoryNameEnum{Bills, Entertainment, Education,
 type Category struct {
 	concern.BaseFields
 
-	Name              CategoryNameEnum
-	TransactionTypeId string
-	TransactionTypes  TransactionType `gorm:"-"`
-	BgColor           string
-	Icon              string
+	Name              CategoryNameEnum `gorm:"column:name"`
+	TransactionTypeId string           `gorm:"column:transaction_type_id"`
+	TransactionTypes  TransactionType  `gorm:"foreignKey:TransactionTypeId;references:ID"`
+	BgColor           string           `gorm:"column:bg_color"`
+	Icon              string           `gorm:"column:icon"`
 }

@@ -76,12 +76,6 @@ func Authenticate() fiber.Handler {
 			})
 		}
 
-		if claims["user_id"] == nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Unable to extract token claims",
-			})
-		}
-
 		// Store user ID in context for further use
 		c.Locals("userID", claims["user_id"])
 

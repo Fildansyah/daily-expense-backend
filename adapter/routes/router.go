@@ -3,6 +3,7 @@ package routes
 import (
 	"expense.com/m/adapter/handlers"
 	"expense.com/m/middlewares"
+	"expense.com/m/module/category"
 	"expense.com/m/module/transaction_type"
 	"expense.com/m/module/user"
 	"github.com/gofiber/fiber/v2"
@@ -10,7 +11,7 @@ import (
 )
 
 func InitRouter(app *fiber.App, db *gorm.DB) {
-
+	//public
 	publicGroup := app.Group("/public")
 	//user
 	userRepo := user.NewUserRepository(db)
@@ -18,6 +19,7 @@ func InitRouter(app *fiber.App, db *gorm.DB) {
 	userHandler := handlers.NewUserHandler(userSvc)
 	RegisterUserRoutes(publicGroup, userHandler)
 
+	//protected
 	protectedGroup := app.Group("/api")
 	protectedGroup.Use(middlewares.Authenticate())
 
@@ -26,4 +28,10 @@ func InitRouter(app *fiber.App, db *gorm.DB) {
 	transactionTypeSvc := transaction_type.NewTransactionTypeService(transactionTypeRepo)
 	transactionTypehandlr := handlers.NewTransactionTypeHandler(transactionTypeSvc)
 	RegisterTransactionTypeRoutes(protectedGroup, transactionTypehandlr)
+
+	//category
+	categoryRepo := category.NewCategoryRepository(db)
+	categorySvc := category.NewCategoryService(categoryRepo)
+	categoryHandler := handlers.NewCategoryHandler(categorySvc)
+	RegisterCategoryRoutes(protectedGroup, categoryHandler)
 }

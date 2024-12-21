@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"expense.com/m/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -57,19 +56,6 @@ func InitDatabase() (*gorm.DB, error) {
 
 	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
 	sqlDB.SetConnMaxLifetime(time.Hour)
-
-	err = db.AutoMigrate(
-		&model.User{},
-		&model.Wallet{},
-		&model.TransactionType{},
-		&model.Transaction{},
-		&model.Category{},
-	)
-
-	if err != nil {
-		log.Fatalf("Error migrating database")
-		return nil, err
-	}
 
 	return db, nil
 }
