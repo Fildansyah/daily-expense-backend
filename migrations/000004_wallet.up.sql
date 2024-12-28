@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS wallet (
+    ID UUID PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    balance FLOAT NOT NULL,
+    currency VARCHAR(255) NOT NULL,
+    type VARCHAR(255) NOT NULL,
+    color VARCHAR(255) NOT NULL,
+    icon VARCHAR(255) NOT NULL,
+    is_exclude BOOLEAN NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP
+);
