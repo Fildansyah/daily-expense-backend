@@ -35,7 +35,6 @@ func (r *CategoryRepository) CreateCategory(input *entity.CategoryDTO) (*entity.
 func (r *CategoryRepository) FindCategoryByTransactionTypeID(ctx context.Context, id string) ([]*entity.CategoryDTO, error) {
 	var entities []model.Category
 	err := r.db.WithContext(ctx).Model(&model.Category{}).
-		Joins("INNER JOIN transaction_types ON categories.transaction_type_id = transaction_types.id").
 		Preload("TransactionTypes").
 		Where("categories.transaction_type_id = ?", id).
 		Find(&entities).Error

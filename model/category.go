@@ -25,9 +25,9 @@ var CategoryNameEnumValues = []CategoryNameEnum{Bills, Entertainment, Education,
 type Category struct {
 	concern.BaseFields
 
-	Name              CategoryNameEnum `gorm:"column:name"`
-	TransactionTypeId string           `gorm:"column:transaction_type_id"`
-	TransactionTypes  TransactionType  `gorm:"foreignKey:TransactionTypeId;references:ID"`
-	BgColor           string           `gorm:"column:bg_color"`
-	Icon              string           `gorm:"column:icon"`
+	Name              CategoryNameEnum
+	TransactionTypeId string
+	TransactionTypes  TransactionType `gorm:"foreignKey:TransactionTypeId;references:ID"`
+	BgColor           string
+	Icon              string
 }
