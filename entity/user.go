@@ -14,7 +14,7 @@ type UserDTO struct {
 	Password  string
 }
 
-func (d *UserDTO) FromModel(m *model.User) *UserDTO {
+func (d *UserDTO) FromModel(m *model.Users) *UserDTO {
 	if m == nil {
 		return nil
 	}
@@ -32,8 +32,8 @@ func (d *UserDTO) FromModel(m *model.User) *UserDTO {
 	}
 }
 
-func (d *UserDTO) ToModel() *model.User {
-	m := &model.User{
+func (d *UserDTO) ToModel() *model.Users {
+	m := &model.Users{
 		BaseFields: concern.BaseFields{
 			ID:        d.ID,
 			CreatedAt: d.CreatedAt,

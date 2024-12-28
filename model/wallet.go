@@ -17,7 +17,7 @@ var WalletTypeValues = []WalletTypeEnum{WalletTypeWallet, WalletTypeDebit, Walle
 type Wallet struct {
 	concern.BaseFields
 	UserID       string
-	User         User `gorm:"-"`
+	Users        Users `gorm:"-"`
 	Name         string
 	Balance      float64
 	Currency     string

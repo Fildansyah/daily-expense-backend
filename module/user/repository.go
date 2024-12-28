@@ -13,19 +13,19 @@ import (
 )
 
 type UserRepository struct {
-	*base_repository.BaseRepository[model.User]
+	*base_repository.BaseRepository[model.Users]
 	db *gorm.DB
 }
 
 func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{
-		BaseRepository: base_repository.NewBaseRepository[model.User](db),
+		BaseRepository: base_repository.NewBaseRepository[model.Users](db),
 		db:             db,
 	}
 }
 
 func (r *UserRepository) FindUserByEmail(email string) (*entity.UserDTO, error) {
-	var user model.User
+	var user model.Users
 	err := r.db.Where("email = ?", email).First(&user).Error
 	if err != nil {
 		return nil, err

@@ -10,7 +10,7 @@ type Transaction struct {
 	concern.BaseFields
 
 	UserID            string
-	User              User `gorm:"-"`
+	Users             Users `gorm:"-"`
 	WalletId          string
 	Wallet            Wallet `gorm:"-"`
 	CategoryId        string

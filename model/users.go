@@ -2,7 +2,7 @@ package model
 
 import "expense.com/m/model/concern"
 
-type User struct {
+type Users struct {
 	concern.BaseFields
 	FirstName string
 	LastName  string
