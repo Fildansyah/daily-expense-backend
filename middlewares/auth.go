@@ -77,7 +77,7 @@ func Authenticate() fiber.Handler {
 		}
 
 		// Store user ID in context for further use
-		c.Locals("userID", claims["user_id"])
+		c.Locals("userID", claims["sub"])
 
 		// Continue to the next middleware
 		return c.Next()

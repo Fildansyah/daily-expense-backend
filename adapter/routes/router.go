@@ -6,6 +6,7 @@ import (
 	"expense.com/m/module/category"
 	"expense.com/m/module/transaction_type"
 	"expense.com/m/module/user"
+	"expense.com/m/module/wallet"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
@@ -34,4 +35,10 @@ func InitRouter(app *fiber.App, db *gorm.DB) {
 	categorySvc := category.NewCategoryService(categoryRepo)
 	categoryHandler := handlers.NewCategoryHandler(categorySvc)
 	RegisterCategoryRoutes(protectedGroup, categoryHandler)
+
+	//wallet
+	walletRepo := wallet.NewWalletRepository(db)
+	walletSvc := wallet.NewWalletService(walletRepo)
+	walletHandler := handlers.NewWalletHandler(walletSvc)
+	RegisterWalletRoutes(protectedGroup, walletHandler)
 }
