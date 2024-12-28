@@ -21,7 +21,6 @@ func (v UserPresenter) FromDTO(dto *entity.UserDTO) *UserPresenter {
 		BaseFields: concern.BaseFields{
 			ID:        dto.ID,
 			CreatedAt: dto.CreatedAt,
-			UpdatedAt: dto.UpdatedAt,
 		},
 		FirstName: dto.FirstName,
 		LastName:  dto.LastName,

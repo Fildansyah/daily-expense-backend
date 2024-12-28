@@ -21,7 +21,6 @@ func (d *TransactionTypeDTO) FromModel(m *model.TransactionType) *TransactionTyp
 		CommonDTOFields: CommonDTOFields{
 			ID:        m.ID,
 			CreatedAt: m.CreatedAt,
-			UpdatedAt: m.UpdatedAt,
 		},
 		Type: m.Type,
 	}
@@ -32,7 +31,6 @@ func (d *TransactionTypeDTO) ToModel() *model.TransactionType {
 		BaseFields: concern.BaseFields{
 			ID:        d.ID,
 			CreatedAt: d.CreatedAt,
-			UpdatedAt: d.UpdatedAt,
 		},
 		Type: d.Type,
 	}

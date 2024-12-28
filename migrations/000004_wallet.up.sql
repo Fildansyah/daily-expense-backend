@@ -1,6 +1,6 @@
-CREATE TABLE IF NOT EXISTS wallet (
+CREATE TABLE IF NOT EXISTS wallets (
     ID UUID PRIMARY KEY,
-    user_id VARCHAR(255) NOT NULL,
+    user_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
     balance FLOAT NOT NULL,
     currency VARCHAR(255) NOT NULL,

@@ -23,7 +23,6 @@ func (d *UserDTO) FromModel(m *model.Users) *UserDTO {
 		CommonDTOFields: CommonDTOFields{
 			ID:        m.ID,
 			CreatedAt: m.CreatedAt,
-			UpdatedAt: m.UpdatedAt,
 		},
 		FirstName: m.FirstName,
 		LastName:  m.LastName,
@@ -37,7 +36,6 @@ func (d *UserDTO) ToModel() *model.Users {
 		BaseFields: concern.BaseFields{
 			ID:        d.ID,
 			CreatedAt: d.CreatedAt,
-			UpdatedAt: d.UpdatedAt,
 		},
 		FirstName: d.FirstName,
 		LastName:  d.LastName,

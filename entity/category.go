@@ -24,7 +24,6 @@ func (d *CategoryDTO) FromModel(m *model.Category) *CategoryDTO {
 		CommonDTOFields: CommonDTOFields{
 			ID:        m.ID,
 			CreatedAt: m.CreatedAt,
-			UpdatedAt: m.UpdatedAt,
 		},
 		Name:              m.Name,
 		TransactionTypeId: m.TransactionTypeId,
@@ -39,7 +38,6 @@ func (d *CategoryDTO) ToModel() *model.Category {
 		BaseFields: concern.BaseFields{
 			ID:        d.ID,
 			CreatedAt: d.CreatedAt,
-			UpdatedAt: d.UpdatedAt,
 		},
 		Name:              d.Name,
 		TransactionTypeId: d.TransactionTypeId,

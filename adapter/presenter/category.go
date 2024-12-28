@@ -24,7 +24,6 @@ func (v CategoryPresenter) FromDTO(dto *entity.CategoryDTO) *CategoryPresenter {
 		BaseFields: concern.BaseFields{
 			ID:        dto.ID,
 			CreatedAt: dto.CreatedAt,
-			UpdatedAt: dto.UpdatedAt,
 		},
 		Name:              dto.Name,
 		TransactionTypeId: dto.TransactionTypeId,

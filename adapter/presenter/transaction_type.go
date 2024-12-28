@@ -20,7 +20,6 @@ func (v TransactionTypePresenter) FromDTO(dto *entity.TransactionTypeDTO) *Trans
 		BaseFields: concern.BaseFields{
 			ID:        dto.ID,
 			CreatedAt: dto.CreatedAt,
-			UpdatedAt: dto.UpdatedAt,
 		},
 		Type: dto.Type,
 	}
