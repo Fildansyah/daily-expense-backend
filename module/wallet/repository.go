@@ -5,19 +5,19 @@ import (
 
 	"expense.com/m/entity"
 	"expense.com/m/model"
-	"expense.com/m/module/base_repository"
+	baserepository "expense.com/m/shared/base_repository"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type WalletRepository struct {
-	*base_repository.BaseRepository[model.Wallet]
+	*baserepository.BaseRepository[model.Wallet]
 	db *gorm.DB
 }
 
 func NewWalletRepository(db *gorm.DB) *WalletRepository {
 	return &WalletRepository{
-		BaseRepository: base_repository.NewBaseRepository[model.Wallet](db),
+		BaseRepository: baserepository.NewBaseRepository[model.Wallet](db),
 		db:             db,
 	}
 }

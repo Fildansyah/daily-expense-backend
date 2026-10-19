@@ -6,21 +6,21 @@ import (
 	"expense.com/m/entity"
 	"expense.com/m/middlewares"
 	"expense.com/m/model"
-	"expense.com/m/module/base_repository"
+	baserepository "expense.com/m/shared/base_repository"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type UserRepository struct {
-	*base_repository.BaseRepository[model.Users]
+	*baserepository.BaseRepository[model.Users]
 	db *gorm.DB
 }
 
 func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{
-		BaseRepository: base_repository.NewBaseRepository[model.Users](db),
 		db:             db,
+		BaseRepository: baserepository.NewBaseRepository[model.Users](db),
 	}
 }
 

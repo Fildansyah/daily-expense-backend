@@ -5,19 +5,19 @@ import (
 
 	"expense.com/m/entity"
 	"expense.com/m/model"
-	"expense.com/m/module/base_repository"
+	baserepository "expense.com/m/shared/base_repository"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type CategoryRepository struct {
-	*base_repository.BaseRepository[model.Category]
+	*baserepository.BaseRepository[model.Category]
 	db *gorm.DB
 }
 
 func NewCategoryRepository(db *gorm.DB) *CategoryRepository {
 	return &CategoryRepository{
-		BaseRepository: base_repository.NewBaseRepository[model.Category](db),
+		BaseRepository: baserepository.NewBaseRepository[model.Category](db),
 		db:             db,
 	}
 }

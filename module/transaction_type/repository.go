@@ -3,17 +3,17 @@ package transaction_type
 import (
 	"expense.com/m/entity"
 	"expense.com/m/model"
-	"expense.com/m/module/base_repository"
+	baserepository "expense.com/m/shared/base_repository"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type TransactionTypeRepository struct {
-	*base_repository.BaseRepository[model.TransactionType]
+	*baserepository.BaseRepository[model.TransactionType]
 }
 
 func NewTransactionTypeRepository(db *gorm.DB) *TransactionTypeRepository {
-	return &TransactionTypeRepository{base_repository.NewBaseRepository[model.TransactionType](db)}
+	return &TransactionTypeRepository{baserepository.NewBaseRepository[model.TransactionType](db)}
 }
 
 func (r *TransactionTypeRepository) CreateTransactionType(input *entity.TransactionTypeDTO) (*entity.TransactionTypeDTO, error) {
