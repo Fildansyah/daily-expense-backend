@@ -14,6 +14,10 @@ func (s *UserService) FindUserByEmail(email string) (*entity.UserDTO, error) {
 	return s.repo.FindUserByEmail(email)
 }
 
+func (s *UserService) GetCurrentUser(id string) (*entity.UserDTO, error) {
+	return s.repo.FindUserByID(id)
+}
+
 func (s *UserService) CreateUser(input *entity.UserDTO) (*entity.UserDTO, error) {
 	return s.repo.CreateUser(input)
 }

@@ -1,15 +1,19 @@
 package presenter
 
 import (
+	"time"
+
 	"expense.com/m/entity"
-	"expense.com/m/model/concern"
 )
 
+// UserPresenter hanya mengekspos field yang aman untuk client
+// (tanpa password).
 type UserPresenter struct {
-	concern.BaseFields
-	FirstName string
-	LastName  string
-	Email     string
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
+	FirstName string    `json:"firstName"`
+	LastName  string    `json:"lastName"`
+	Email     string    `json:"email"`
 }
 
 func (v UserPresenter) FromDTO(dto *entity.UserDTO) *UserPresenter {
@@ -18,10 +22,8 @@ func (v UserPresenter) FromDTO(dto *entity.UserDTO) *UserPresenter {
 	}
 
 	return &UserPresenter{
-		BaseFields: concern.BaseFields{
-			ID:        dto.ID,
-			CreatedAt: dto.CreatedAt,
-		},
+		ID:        dto.ID,
+		CreatedAt: dto.CreatedAt,
 		FirstName: dto.FirstName,
 		LastName:  dto.LastName,
 		Email:     dto.Email,

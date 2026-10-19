@@ -26,6 +26,9 @@ func InitRouter(app *fiber.App, db *gorm.DB) {
 	protectedGroup := app.Group("/api")
 	protectedGroup.Use(middlewares.Authenticate())
 
+	//user (protected) — session check untuk user yang sedang login
+	protectedGroup.Get("/user/me", userHandler.GetCurrentUser)
+
 	//transaction type
 	transactionTypeRepo := transaction_type.NewTransactionTypeRepository(db)
 	transactionTypeSvc := transaction_type.NewTransactionTypeService(transactionTypeRepo)

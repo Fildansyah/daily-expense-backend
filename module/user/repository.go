@@ -34,6 +34,16 @@ func (r *UserRepository) FindUserByEmail(email string) (*entity.UserDTO, error) 
 	return dto.FromModel(&user), nil
 }
 
+func (r *UserRepository) FindUserByID(id string) (*entity.UserDTO, error) {
+	var user model.Users
+	err := r.db.Where("id = ?", id).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	dto := new(entity.UserDTO)
+	return dto.FromModel(&user), nil
+}
+
 func (r *UserRepository) CreateUser(input *entity.UserDTO) (*entity.UserDTO, error) {
 
 	existingEmail, _ := r.FindUserByEmail(input.Email)
