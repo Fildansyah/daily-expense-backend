@@ -3,7 +3,9 @@ package routes
 import (
 	"expense.com/m/adapter/handlers"
 	"expense.com/m/middlewares"
+	"expense.com/m/module/bill"
 	"expense.com/m/module/category"
+	"expense.com/m/module/lender"
 	"expense.com/m/module/transaction_type"
 	"expense.com/m/module/user"
 	"expense.com/m/module/wallet"
@@ -41,4 +43,16 @@ func InitRouter(app *fiber.App, db *gorm.DB) {
 	walletSvc := wallet.NewWalletService(walletRepo)
 	walletHandler := handlers.NewWalletHandler(walletSvc)
 	RegisterWalletRoutes(protectedGroup, walletHandler)
+
+	//bill
+	billRepo := bill.NewBillRepository(db)
+	billSvc := bill.NewBillService(billRepo)
+	billHandler := handlers.NewBillHandler(billSvc)
+	RegisterBillRoutes(protectedGroup, billHandler)
+
+	//lender
+	lenderRepo := lender.NewLenderRepository(db)
+	lenderSvc := lender.NewLenderService(lenderRepo)
+	lenderHandler := handlers.NewLenderHandler(lenderSvc)
+	RegisterLenderRoutes(protectedGroup, lenderHandler)
 }

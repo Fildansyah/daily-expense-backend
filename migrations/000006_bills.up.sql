@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS bills (
+    ID UUID PRIMARY KEY,
+    user_id UUID NOT NULL,
+    lender VARCHAR(255) NOT NULL,
+    amount FLOAT NOT NULL,
+    paid_amount FLOAT NOT NULL DEFAULT 0,
+    due_date DATE NOT NULL,
+    deskripsi VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP
+);
