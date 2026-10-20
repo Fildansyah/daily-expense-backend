@@ -1,4 +1,4 @@
-SHELL := /bin/zsh
+SHELL := /bin/sh
 
 api:
 	echo "Starting server"
@@ -11,7 +11,7 @@ migrate-create:
 	migrate create -ext sql -dir migrations -seq $(name)
 
 migrate-up:
-	source .env && migrate -path ./migrations -database "$$DB_URL" -verbose up || echo "Migration up failed"
+	. ./.env && migrate -path ./migrations -database "$$DB_URL" -verbose up || echo "Migration up failed"
 
 migrate-down:
-	source .env && migrate -path ./migrations -database "$$DB_URL" down || echo "Migration down failed"
+	. ./.env && migrate -path ./migrations -database "$$DB_URL" down || echo "Migration down failed"
