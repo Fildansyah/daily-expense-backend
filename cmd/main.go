@@ -20,11 +20,8 @@ func getEnv(key, fallback string) string {
 }
 
 func main() {
-	err := godotenv.Load()
-
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// .env opsional: di Docker env disuplai lewat docker-compose
+	_ = godotenv.Load()
 
 	db, err := config.InitDatabase()
 

@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+bin
+README.md
+Dockerfile
+makefile
+.commandcode

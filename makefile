@@ -11,7 +11,7 @@ migrate-create:
 	migrate create -ext sql -dir migrations -seq $(name)
 
 migrate-up:
-	migrate -path migrations -database "postgres://postgres:postgres@localhost:5432/daily-expense" -verbose up || echo "Migration up failed"
+	source .env && migrate -path ./migrations -database "$$DB_URL" -verbose up || echo "Migration up failed"
 
 migrate-down:
-	source .env && migrate -path ./migrations -database ${DATABASE_URL} down || echo "Migration down failed"
+	source .env && migrate -path ./migrations -database "$$DB_URL" down || echo "Migration down failed"
