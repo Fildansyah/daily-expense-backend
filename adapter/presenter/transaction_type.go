@@ -1,14 +1,16 @@
 package presenter
 
 import (
+	"time"
+
 	"expense.com/m/entity"
 	"expense.com/m/model"
-	"expense.com/m/model/concern"
 )
 
 type TransactionTypePresenter struct {
-	concern.BaseFields
-	Type model.TransactionTypeEnum
+	ID        string                    `json:"id"`
+	CreatedAt time.Time                 `json:"createdAt"`
+	Type      model.TransactionTypeEnum `json:"type"`
 }
 
 func (v TransactionTypePresenter) FromDTO(dto *entity.TransactionTypeDTO) *TransactionTypePresenter {
@@ -17,10 +19,8 @@ func (v TransactionTypePresenter) FromDTO(dto *entity.TransactionTypeDTO) *Trans
 	}
 
 	return &TransactionTypePresenter{
-		BaseFields: concern.BaseFields{
-			ID:        dto.ID,
-			CreatedAt: dto.CreatedAt,
-		},
-		Type: dto.Type,
+		ID:        dto.ID,
+		CreatedAt: dto.CreatedAt,
+		Type:      dto.Type,
 	}
 }

@@ -17,26 +17,35 @@ func NewCategoryHandler(service *category.CategoryService) *CategoryHandler {
 }
 
 func (h *CategoryHandler) CreateCategory(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
+	}
+
 	var dto entity.CategoryDTO
 	if err := c.BodyParser(&dto); err != nil {
+		return base_response.Error(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+
+	dto.UserID = userID
+
+	result, err := h.service.CreateCategory(c.Context(), &dto)
+	if err != nil {
 		return base_response.Error(c, fiber.StatusBadRequest, err.Error())
 	}
 
-	result, err := h.service.CreateCategory(&dto)
-
-	if err != nil {
-		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
-	}
-
-	return base_response.Success(c, result)
+	return base_response.Created(c, new(presenter.CategoryPresenter).FromDTO(result))
 }
 
 func (h *CategoryHandler) FindCategoryByTransactionTypeID(c *fiber.Ctx) error {
-	id := c.Params("id")
-	result, err := h.service.FindCategoryByTransactionTypeID(c.Context(), id)
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
+	}
 
+	result, err := h.service.FindCategoryByTransactionTypeID(c.Context(), c.Params("id"), userID)
 	if err != nil {
-		return base_response.Error(c, fiber.StatusNotFound, err.Error())
+		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
 	resp := make([]presenter.CategoryPresenter, len(result))

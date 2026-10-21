@@ -7,6 +7,7 @@ import (
 
 	"expense.com/m/adapter/routes"
 	"expense.com/m/config"
+	"expense.com/m/shared/token"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/lpernett/godotenv"
@@ -22,13 +23,22 @@ func getEnv(key, fallback string) string {
 func main() {
 	// .env opsional: di Docker env disuplai lewat docker-compose
 	_ = godotenv.Load()
+	// .env.local dipakai untuk secret lokal yang tidak di-commit (mis. JWT_SECRET).
+	_ = godotenv.Overload(".env.local")
+
+	authCfg, err := config.LoadAuthConfig()
+	if err != nil {
+		log.Fatalf("Konfigurasi auth tidak valid: %v", err)
+	}
 
 	db, err := config.InitDatabase()
-
 	if err != nil {
 		log.Fatalf("Error connecting to database: %v", err)
 	}
-	app := fiber.New()
+
+	app := fiber.New(fiber.Config{
+		ProxyHeader: "X-Forwarded-For",
+	})
 
 	// CORS — izinkan frontend (Next.js) mengakses API lintas origin/port.
 	// Atur CORS_ORIGINS di .env untuk environment lain.
@@ -39,7 +49,8 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	routes.InitRouter(app, db)
+	tokenManager := token.NewManager(authCfg.JWTSecret, authCfg.AccessTTL)
+	routes.InitRouter(app, db, authCfg, tokenManager)
 
 	for _, route := range app.Stack() {
 		for _, r := range route {
@@ -47,7 +58,7 @@ func main() {
 		}
 	}
 
-	// Port backend dibaca dari env PORT (default 3000).
+	// Port backend dibaca dari env PORT (default 8000).
 	// Karena Next.js dev juga memakai :3000, gunakan port lain
 	// (mis. 8000) agar tidak bentrok.
 	port := getEnv("PORT", "8000")

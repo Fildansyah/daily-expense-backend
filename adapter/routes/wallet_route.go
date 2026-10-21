@@ -9,5 +9,5 @@ func RegisterWalletRoutes(app fiber.Router, handler *handlers.WalletHandler) {
 	routes := app.Group("/wallet")
 
 	routes.Post("", handler.CreateWallet)
-	routes.Get("/user/:id", handler.FindWalletByUserID)
+	routes.Get("", handler.GetMyWallets)
 }

@@ -17,34 +17,37 @@ func NewWalletHandler(service *wallet.WalletService) *WalletHandler {
 }
 
 func (w *WalletHandler) CreateWallet(c *fiber.Ctx) error {
-	var dto entity.WalletDTO
-	authId, ok := c.Locals("userID").(string)
-
-	if !ok {
+	authID, ok := c.Locals("userID").(string)
+	if !ok || authID == "" {
 		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
 	}
 
-	dto.UserID = authId
-
+	var dto entity.WalletDTO
 	if err := c.BodyParser(&dto); err != nil {
-		return base_response.Error(c, fiber.StatusBadRequest, err.Error())
+		return base_response.Error(c, fiber.StatusBadRequest, "Body request tidak valid")
 	}
 
-	result, err := w.service.CreateWallet(&dto)
+	// UserID selalu dari token, bukan dari body request.
+	dto.UserID = authID
 
+	result, err := w.service.CreateWallet(&dto)
 	if err != nil {
 		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	return base_response.Success(c, result)
+	return base_response.Created(c, new(presenter.WalletPresenter).FromDTO(result))
 }
 
-func (w *WalletHandler) FindWalletByUserID(c *fiber.Ctx) error {
-	id := c.Params("id")
-	result, err := w.service.FindWalletByUserID(c.Context(), id)
+// GetMyWallets hanya mengembalikan wallet milik user yang sedang login.
+func (w *WalletHandler) GetMyWallets(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
+	}
 
+	result, err := w.service.FindWalletByUserID(c.Context(), userID)
 	if err != nil {
-		return base_response.Error(c, fiber.StatusNotFound, err.Error())
+		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
 	resp := make([]presenter.WalletPresenter, len(result))

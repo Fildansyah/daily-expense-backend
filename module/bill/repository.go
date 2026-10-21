@@ -148,9 +148,9 @@ func (r *BillRepository) GetBillSummary(ctx context.Context, userID string, f en
 
 	var rows []aggRow
 	err := query.
-		Select("lender, COUNT(*) as count, "+
-			"COALESCE(SUM(amount), 0) as total, "+
-			"COALESCE(SUM(paid_amount), 0) as paid, "+
+		Select("lender, COUNT(*) as count, " +
+			"COALESCE(SUM(amount), 0) as total, " +
+			"COALESCE(SUM(paid_amount), 0) as paid, " +
 			"COALESCE(SUM(amount - paid_amount), 0) as remaining").
 		Group("lender").
 		Find(&rows).Error

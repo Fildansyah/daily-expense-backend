@@ -1,10 +1,9 @@
 package user
 
 import (
-	"fmt"
+	"errors"
 
 	"expense.com/m/entity"
-	"expense.com/m/middlewares"
 	"expense.com/m/model"
 	baserepository "expense.com/m/shared/base_repository"
 	"github.com/google/uuid"
@@ -24,9 +23,14 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	}
 }
 
+// FindUserByEmail mengembalikan (nil, nil) jika user tidak ditemukan agar
+// pemanggil bisa membedakan "tidak ada" dari kegagalan database.
 func (r *UserRepository) FindUserByEmail(email string) (*entity.UserDTO, error) {
 	var user model.Users
-	err := r.db.Where("email = ?", email).First(&user).Error
+	err := r.db.Where("LOWER(email) = ?", entity.NormalizeEmail(email)).First(&user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -37,6 +41,9 @@ func (r *UserRepository) FindUserByEmail(email string) (*entity.UserDTO, error) 
 func (r *UserRepository) FindUserByID(id string) (*entity.UserDTO, error) {
 	var user model.Users
 	err := r.db.Where("id = ?", id).First(&user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -45,15 +52,17 @@ func (r *UserRepository) FindUserByID(id string) (*entity.UserDTO, error) {
 }
 
 func (r *UserRepository) CreateUser(input *entity.UserDTO) (*entity.UserDTO, error) {
+	input.Email = entity.NormalizeEmail(input.Email)
 
-	existingEmail, _ := r.FindUserByEmail(input.Email)
-
-	if existingEmail != nil {
-		return nil, fmt.Errorf("user with email %s already exists", input.Email)
+	existing, err := r.FindUserByEmail(input.Email)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return nil, entity.ErrEmailExists
 	}
 
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
-
 	if err != nil {
 		return nil, err
 	}
@@ -63,34 +72,12 @@ func (r *UserRepository) CreateUser(input *entity.UserDTO) (*entity.UserDTO, err
 	modelEntity.Password = string(hashedPass)
 
 	if err := r.Create(modelEntity); err != nil {
+		// Unique constraint bisa menang balapan dengan request lain.
+		if current, findErr := r.FindUserByEmail(input.Email); findErr == nil && current != nil {
+			return nil, entity.ErrEmailExists
+		}
 		return nil, err
 	}
+
 	return input.FromModel(modelEntity), nil
-}
-
-func (r *UserRepository) LoginUser(input *entity.SignInRequest) (*entity.SignInResponse, error) {
-
-	user, err := r.FindUserByEmail(input.Email)
-	if err != nil {
-		return nil, err
-	}
-
-	if user == nil {
-		return nil, fmt.Errorf("user with email %s not found", input.Email)
-	}
-
-	if user.Password == "" {
-		return nil, fmt.Errorf("user password is empty")
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-		return nil, err
-	}
-
-	token, err := middlewares.GenerateJWT(user.ID, user.Email)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate JWT: %v", err)
-	}
-
-	return &entity.SignInResponse{Token: token}, nil
 }

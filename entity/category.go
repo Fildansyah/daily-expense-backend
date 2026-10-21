@@ -8,6 +8,7 @@ import (
 type CategoryDTO struct {
 	CommonDTOFields
 
+	UserID            string `json:"-"`
 	Name              model.CategoryNameEnum
 	TransactionTypeId string
 	TransactionTypes  model.TransactionType
@@ -25,6 +26,7 @@ func (d *CategoryDTO) FromModel(m *model.Category) *CategoryDTO {
 			ID:        m.ID,
 			CreatedAt: m.CreatedAt,
 		},
+		UserID:            m.UserID,
 		Name:              m.Name,
 		TransactionTypeId: m.TransactionTypeId,
 		TransactionTypes:  m.TransactionTypes,
@@ -34,16 +36,15 @@ func (d *CategoryDTO) FromModel(m *model.Category) *CategoryDTO {
 }
 
 func (d *CategoryDTO) ToModel() *model.Category {
-	m := &model.Category{
+	return &model.Category{
 		BaseFields: concern.BaseFields{
 			ID:        d.ID,
 			CreatedAt: d.CreatedAt,
 		},
+		UserID:            d.UserID,
 		Name:              d.Name,
 		TransactionTypeId: d.TransactionTypeId,
 		BgColor:           d.BgColor,
 		Icon:              d.Icon,
 	}
-
-	return m
 }

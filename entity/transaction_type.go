@@ -9,7 +9,8 @@ import (
 type TransactionTypeDTO struct {
 	CommonDTOFields
 
-	Type model.TransactionTypeEnum
+	UserID string `json:"-"`
+	Type   model.TransactionTypeEnum
 }
 
 func (d *TransactionTypeDTO) FromModel(m *model.TransactionType) *TransactionTypeDTO {
@@ -22,7 +23,8 @@ func (d *TransactionTypeDTO) FromModel(m *model.TransactionType) *TransactionTyp
 			ID:        m.ID,
 			CreatedAt: m.CreatedAt,
 		},
-		Type: m.Type,
+		UserID: m.UserID,
+		Type:   m.Type,
 	}
 }
 
@@ -32,7 +34,8 @@ func (d *TransactionTypeDTO) ToModel() *model.TransactionType {
 			ID:        d.ID,
 			CreatedAt: d.CreatedAt,
 		},
-		Type: d.Type,
+		UserID: d.UserID,
+		Type:   d.Type,
 	}
 
 	if d.DeletedAt != nil {

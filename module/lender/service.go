@@ -14,6 +14,6 @@ func NewLenderService(repo *LenderRepository) *LenderService {
 	return &LenderService{repo: repo}
 }
 
-func (s *LenderService) GetLenders(ctx context.Context) ([]*entity.LenderDTO, error) {
-	return s.repo.FindAllLenders(ctx)
+func (s *LenderService) GetLenders(ctx context.Context, userID string) ([]*entity.LenderDTO, error) {
+	return s.repo.FindAllLenders(ctx, userID)
 }

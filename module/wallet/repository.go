@@ -35,7 +35,6 @@ func (w *WalletRepository) CreateWallet(input *entity.WalletDTO) (*entity.Wallet
 func (w *WalletRepository) FindWalletByUserID(ctx context.Context, userID string) ([]*entity.WalletDTO, error) {
 	var wallet []model.Wallet
 	err := w.db.WithContext(ctx).Model(&model.Wallet{}).
-		Preload("Users").
 		Where("user_id = ?", userID).Find(&wallet).Error
 	if err != nil {
 		return nil, err

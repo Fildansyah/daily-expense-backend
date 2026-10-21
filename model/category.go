@@ -25,6 +25,7 @@ var CategoryNameEnumValues = []CategoryNameEnum{Bills, Entertainment, Education,
 type Category struct {
 	concern.BaseFields
 
+	UserID            string
 	Name              CategoryNameEnum
 	TransactionTypeId string
 	TransactionTypes  TransactionType `gorm:"foreignKey:TransactionTypeId;references:ID"`

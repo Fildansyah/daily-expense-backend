@@ -8,16 +8,22 @@ import (
 type LenderDTO struct {
 	CommonDTOFields
 
-	Name string `json:"name"`
+	UserID string `json:"-"`
+	Name   string `json:"name"`
 }
 
 func (d *LenderDTO) FromModel(m *model.Lender) *LenderDTO {
+	if m == nil {
+		return nil
+	}
+
 	return &LenderDTO{
 		CommonDTOFields: CommonDTOFields{
 			ID:        m.ID,
 			CreatedAt: m.CreatedAt,
 		},
-		Name: m.Name,
+		UserID: m.UserID,
+		Name:   m.Name,
 	}
 }
 
@@ -27,6 +33,7 @@ func (d *LenderDTO) ToModel() *model.Lender {
 			ID:        d.ID,
 			CreatedAt: d.CreatedAt,
 		},
-		Name: d.Name,
+		UserID: d.UserID,
+		Name:   d.Name,
 	}
 }

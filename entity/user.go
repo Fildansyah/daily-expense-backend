@@ -1,9 +1,19 @@
 package entity
 
 import (
+	"errors"
+	"fmt"
+	"net/mail"
+	"strings"
+
 	"expense.com/m/model"
 	"expense.com/m/model/concern"
 	"gorm.io/gorm"
+)
+
+var (
+	ErrEmailExists  = errors.New("email sudah terdaftar")
+	ErrInvalidInput = errors.New("input tidak valid")
 )
 
 type UserDTO struct {
@@ -50,11 +60,41 @@ func (d *UserDTO) ToModel() *model.Users {
 	return m
 }
 
-type SignInRequest struct {
+type RegisterRequest struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+}
+
+func (r *RegisterRequest) Normalize() {
+	r.FirstName = strings.TrimSpace(r.FirstName)
+	r.LastName = strings.TrimSpace(r.LastName)
+	r.Email = NormalizeEmail(r.Email)
+}
+
+func (r *RegisterRequest) Validate() error {
+	if r.FirstName == "" || r.LastName == "" {
+		return fmt.Errorf("%w: nama depan dan belakang wajib diisi", ErrInvalidInput)
+	}
+
+	addr, err := mail.ParseAddress(r.Email)
+	if err != nil || addr.Address != r.Email {
+		return fmt.Errorf("%w: format email tidak valid", ErrInvalidInput)
+	}
+
+	if len([]rune(r.Password)) < 8 {
+		return fmt.Errorf("%w: kata sandi minimal 8 karakter", ErrInvalidInput)
+	}
+
+	return nil
+}
+
+type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-type SignInResponse struct {
-	Token string `json:"token"`
+func NormalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
 }

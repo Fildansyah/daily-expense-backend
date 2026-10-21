@@ -10,10 +10,14 @@ import (
 
 type TransactionTypeRepository struct {
 	*baserepository.BaseRepository[model.TransactionType]
+	db *gorm.DB
 }
 
 func NewTransactionTypeRepository(db *gorm.DB) *TransactionTypeRepository {
-	return &TransactionTypeRepository{baserepository.NewBaseRepository[model.TransactionType](db)}
+	return &TransactionTypeRepository{
+		BaseRepository: baserepository.NewBaseRepository[model.TransactionType](db),
+		db:             db,
+	}
 }
 
 func (r *TransactionTypeRepository) CreateTransactionType(input *entity.TransactionTypeDTO) (*entity.TransactionTypeDTO, error) {
@@ -26,26 +30,48 @@ func (r *TransactionTypeRepository) CreateTransactionType(input *entity.Transact
 	return input.FromModel(modelEntity), nil
 }
 
-func (r *TransactionTypeRepository) FindTransactionTypeByID(id string) (*entity.TransactionTypeDTO, error) {
-	modelEntity, err := r.FindByID(id)
+func (r *TransactionTypeRepository) FindTransactionTypeByID(id, userID string) (*entity.TransactionTypeDTO, error) {
+	var modelEntity model.TransactionType
+	err := r.db.
+		Where("id = ? AND (user_id IS NULL OR user_id = ?)", id, userID).
+		First(&modelEntity).Error
 	if err != nil {
 		return nil, err
 	}
 	dto := new(entity.TransactionTypeDTO)
-	return dto.FromModel(modelEntity), nil
+	return dto.FromModel(&modelEntity), nil
 }
 
 func (r *TransactionTypeRepository) UpdateTransactionType(input *entity.TransactionTypeDTO) error {
-	modelEntity := input.ToModel()
-	return r.Update(modelEntity)
+	result := r.db.Model(&model.TransactionType{}).
+		Where("id = ? AND user_id = ?", input.ID, input.UserID).
+		Update("type", input.Type)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
-func (r *TransactionTypeRepository) DeleteTransactionType(id string) error {
-	return r.Delete(id)
+func (r *TransactionTypeRepository) DeleteTransactionType(id, userID string) error {
+	result := r.db.Where("id = ? AND user_id = ?", id, userID).Delete(&model.TransactionType{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
-func (r *TransactionTypeRepository) FindAllTransactionTypes() ([]*entity.TransactionTypeDTO, error) {
-	modelEntities, err := r.FindAll()
+func (r *TransactionTypeRepository) FindAllTransactionTypes(userID string) ([]*entity.TransactionTypeDTO, error) {
+	var modelEntities []model.TransactionType
+	err := r.db.
+		Where("user_id IS NULL OR user_id = ?", userID).
+		Order("created_at ASC").
+		Find(&modelEntities).Error
 	if err != nil {
 		return nil, err
 	}

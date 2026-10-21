@@ -15,5 +15,6 @@ var TransactionTypeValues = []TransactionTypeEnum{Income, Expense, Transfer}
 type TransactionType struct {
 	concern.BaseFields
 
-	Type TransactionTypeEnum
+	UserID string
+	Type   TransactionTypeEnum
 }

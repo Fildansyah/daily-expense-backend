@@ -2,84 +2,31 @@ package middlewares
 
 import (
 	"strings"
-	"time"
 
+	"expense.com/m/adapter/handlers/base_response"
+	"expense.com/m/shared/token"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 )
 
-const jwtSecretKey = "amat-sangat-rahasia"
-
-func GenerateJWT(userID, email string) (string, error) {
-	// Define JWT claims
-	claims := jwt.MapClaims{
-		"sub":   userID,                                // Subject (user ID)
-		"email": email,                                 // User email
-		"exp":   time.Now().Add(time.Hour * 24).Unix(), // Token expiration (24 hours)
-		"iat":   time.Now().Unix(),                     // Issued at
-	}
-
-	// Create a new JWT token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Sign the token with the secret key
-	return token.SignedString([]byte(jwtSecretKey))
-}
-
-func Authenticate() fiber.Handler {
+func Authenticate(tm *token.Manager) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Get the Authorization header
-		authHeader := c.Get("Authorization")
+		authHeader := strings.TrimSpace(c.Get("Authorization"))
 		if authHeader == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Missing authorization token",
-			})
+			return base_response.Error(c, fiber.StatusUnauthorized, "Token otorisasi tidak ditemukan")
 		}
 
-		// Check if the header starts with "Bearer "
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid token format",
-			})
+		parts := strings.Fields(authHeader)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+			return base_response.Error(c, fiber.StatusUnauthorized, "Format token tidak valid")
 		}
 
-		tokenString := parts[1]
-
-		// Parse and validate the token
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// Verify the signing method
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fiber.NewError(fiber.StatusUnauthorized, "Invalid token signing method")
-			}
-			return []byte(jwtSecretKey), nil
-		})
-
+		claims, err := tm.ParseAccess(parts[1])
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid or expired token",
-			})
+			return base_response.Error(c, fiber.StatusUnauthorized, "Token tidak valid atau sudah kedaluwarsa")
 		}
 
-		// Check if the token is valid
-		if !token.Valid {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid token",
-			})
-		}
+		c.Locals("userID", claims.Subject)
 
-		// Extract claims
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Unable to extract token claims",
-			})
-		}
-
-		// Store user ID in context for further use
-		c.Locals("userID", claims["sub"])
-
-		// Continue to the next middleware
 		return c.Next()
 	}
 }

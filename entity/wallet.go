@@ -8,15 +8,14 @@ import (
 type WalletDTO struct {
 	CommonDTOFields
 
-	UserID    string      `json:"user_id"`
-	Users     model.Users `json:"users"`
-	Name      string      `json:"name"`
-	Balance   float64     `json:"balance"`
-	Currency  string      `json:"currency"`
-	Type      string      `json:"type"`
-	Color     string      `json:"color"`
-	Icon      string      `json:"icon"`
-	IsExclude bool        `json:"is_exclude"`
+	UserID    string  `json:"-"`
+	Name      string  `json:"name"`
+	Balance   float64 `json:"balance"`
+	Currency  string  `json:"currency"`
+	Type      string  `json:"type"`
+	Color     string  `json:"color"`
+	Icon      string  `json:"icon"`
+	IsExclude bool    `json:"isExclude"`
 }
 
 func (d *WalletDTO) FromModel(m *model.Wallet) *WalletDTO {
@@ -26,7 +25,6 @@ func (d *WalletDTO) FromModel(m *model.Wallet) *WalletDTO {
 			CreatedAt: m.CreatedAt,
 		},
 		UserID:    m.UserID,
-		Users:     m.Users,
 		Name:      m.Name,
 		Balance:   m.Balance,
 		Currency:  m.Currency,
@@ -44,7 +42,6 @@ func (d *WalletDTO) ToModel() *model.Wallet {
 			CreatedAt: d.CreatedAt,
 		},
 		UserID:    d.UserID,
-		Users:     d.Users,
 		Name:      d.Name,
 		Balance:   d.Balance,
 		Currency:  d.Currency,

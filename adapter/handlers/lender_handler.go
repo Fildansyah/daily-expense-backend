@@ -16,7 +16,12 @@ func NewLenderHandler(service *lender.LenderService) *LenderHandler {
 }
 
 func (h *LenderHandler) GetLenders(c *fiber.Ctx) error {
-	result, err := h.service.GetLenders(c.Context())
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
+	}
+
+	result, err := h.service.GetLenders(c.Context(), userID)
 	if err != nil {
 		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
 	}

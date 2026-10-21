@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"errors"
+
 	"expense.com/m/adapter/handlers/base_response"
 	"expense.com/m/adapter/presenter"
 	"expense.com/m/entity"
@@ -16,55 +18,41 @@ func NewUserHandler(service *user.UserService) *UserHandler {
 	return &UserHandler{service: service}
 }
 
-func (h *UserHandler) FindUserByEmail(c *fiber.Ctx) error {
-	email := c.Params("email")
-	result, err := h.service.FindUserByEmail(email)
-	if err != nil {
-		return base_response.Error(c, fiber.StatusNotFound, err.Error())
-	}
-
-	return base_response.Success(c, new(presenter.UserPresenter).FromDTO(result))
-}
-
 func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
-	var dto entity.UserDTO
-	if err := c.BodyParser(&dto); err != nil {
-		return base_response.Error(c, fiber.StatusBadRequest, err.Error())
+	var req entity.RegisterRequest
+	if err := c.BodyParser(&req); err != nil {
+		return base_response.Error(c, fiber.StatusBadRequest, "Body request tidak valid")
 	}
 
-	result, err := h.service.CreateUser(&dto)
+	result, err := h.service.CreateUser(&req)
 	if err != nil {
-		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
+		switch {
+		case errors.Is(err, entity.ErrInvalidInput):
+			return base_response.Error(c, fiber.StatusBadRequest, err.Error())
+		case errors.Is(err, entity.ErrEmailExists):
+			return base_response.Error(c, fiber.StatusConflict, err.Error())
+		default:
+			return base_response.Error(c, fiber.StatusInternalServerError, "Terjadi kesalahan pada server")
+		}
 	}
 
-	return base_response.Success(c, new(presenter.UserPresenter).FromDTO(result))
-}
-
-func (h *UserHandler) LoginUser(c *fiber.Ctx) error {
-	var dto entity.SignInRequest
-	if err := c.BodyParser(&dto); err != nil {
-		return base_response.Error(c, fiber.StatusBadRequest, err.Error())
-	}
-
-	result, err := h.service.LoginUser(&dto)
-	if err != nil {
-		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
-	}
-
-	return base_response.Success(c, result)
+	return base_response.Created(c, new(presenter.UserPresenter).FromDTO(result))
 }
 
 // GetCurrentUser mengembalikan user yang sedang login berdasarkan
 // userID yang disetel oleh middleware Authenticate.
 func (h *UserHandler) GetCurrentUser(c *fiber.Ctx) error {
 	userID, ok := c.Locals("userID").(string)
-	if !ok {
+	if !ok || userID == "" {
 		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
 	}
 
 	result, err := h.service.GetCurrentUser(userID)
 	if err != nil {
 		return base_response.Error(c, fiber.StatusNotFound, err.Error())
+	}
+	if result == nil {
+		return base_response.Error(c, fiber.StatusUnauthorized, "User tidak ditemukan")
 	}
 
 	return base_response.Success(c, new(presenter.UserPresenter).FromDTO(result))

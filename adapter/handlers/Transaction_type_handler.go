@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"errors"
+
 	"expense.com/m/adapter/handlers/base_response"
 	"expense.com/m/adapter/presenter"
 	"expense.com/m/entity"
 	"expense.com/m/module/transaction_type"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 type TransactionTypeHandler struct {
@@ -17,56 +20,92 @@ func NewTransactionTypeHandler(service *transaction_type.TransactionTypeService)
 }
 
 func (h *TransactionTypeHandler) CreateTransactionType(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
+	}
+
 	var dto entity.TransactionTypeDTO
 	if err := c.BodyParser(&dto); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return base_response.Error(c, fiber.StatusBadRequest, "Body request tidak valid")
 	}
+
+	dto.UserID = userID
 
 	result, err := h.service.CreateTransactionType(&dto)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(result)
+	return base_response.Created(c, new(presenter.TransactionTypePresenter).FromDTO(result))
 }
 
 func (h *TransactionTypeHandler) GetTransactionTypeByID(c *fiber.Ctx) error {
-	id := c.Params("id")
-	result, err := h.service.GetTransactionTypeByID(id)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
 	}
 
-	return c.Status(fiber.StatusOK).JSON(result)
+	result, err := h.service.GetTransactionTypeByID(c.Params("id"), userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return base_response.Error(c, fiber.StatusNotFound, "Transaction type tidak ditemukan")
+		}
+		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return base_response.Success(c, new(presenter.TransactionTypePresenter).FromDTO(result))
 }
 
-// UpdateTransactionType handles updating an existing transaction type.
 func (h *TransactionTypeHandler) UpdateTransactionType(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
+	}
+
 	var dto entity.TransactionTypeDTO
 	if err := c.BodyParser(&dto); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return base_response.Error(c, fiber.StatusBadRequest, "Body request tidak valid")
 	}
+	if dto.ID == "" {
+		return base_response.Error(c, fiber.StatusBadRequest, "ID transaction type wajib diisi")
+	}
+
+	dto.UserID = userID
 
 	if err := h.service.UpdateTransactionType(&dto); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return base_response.Error(c, fiber.StatusNotFound, "Transaction type tidak ditemukan")
+		}
+		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Transaction type updated successfully"})
+	return base_response.Success(c, fiber.Map{"message": "Transaction type berhasil diperbarui"})
 }
 
-// DeleteTransactionType handles deleting a transaction type by ID.
 func (h *TransactionTypeHandler) DeleteTransactionType(c *fiber.Ctx) error {
-	id := c.Params("id")
-	if err := h.service.DeleteTransactionType(id); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Transaction type deleted successfully"})
+	if err := h.service.DeleteTransactionType(c.Params("id"), userID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return base_response.Error(c, fiber.StatusNotFound, "Transaction type tidak ditemukan")
+		}
+		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return base_response.Success(c, fiber.Map{"message": "Transaction type berhasil dihapus"})
 }
 
-// GetAllTransactionTypes handles fetching all transaction types.
 func (h *TransactionTypeHandler) GetAllTransactionTypes(c *fiber.Ctx) error {
-	result, err := h.service.GetAllTransactionTypes()
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
+	}
+
+	result, err := h.service.GetAllTransactionTypes(userID)
 	if err != nil {
 		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
 	}

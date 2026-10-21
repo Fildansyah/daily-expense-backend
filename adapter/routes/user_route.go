@@ -9,6 +9,4 @@ func RegisterUserRoutes(app fiber.Router, handler *handlers.UserHandler) {
 	routes := app.Group("/user")
 
 	routes.Post("", handler.CreateUser)
-	routes.Post("/login", handler.LoginUser)
-	routes.Get("/email/:email", handler.FindUserByEmail)
 }

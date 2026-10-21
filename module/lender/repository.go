@@ -21,9 +21,14 @@ func NewLenderRepository(db *gorm.DB) *LenderRepository {
 	}
 }
 
-func (r *LenderRepository) FindAllLenders(ctx context.Context) ([]*entity.LenderDTO, error) {
+// FindAllLenders mengembalikan lender global (user_id NULL) dan milik user.
+func (r *LenderRepository) FindAllLenders(ctx context.Context, userID string) ([]*entity.LenderDTO, error) {
 	var entities []model.Lender
-	if err := r.db.WithContext(ctx).Order("name ASC").Find(&entities).Error; err != nil {
+	err := r.db.WithContext(ctx).
+		Where("user_id IS NULL OR user_id = ?", userID).
+		Order("name ASC").
+		Find(&entities).Error
+	if err != nil {
 		return nil, err
 	}
 

@@ -9,8 +9,8 @@ func RegisterTransactionTypeRoutes(app fiber.Router, handler *handlers.Transacti
 	routes := app.Group("/transaction-type")
 
 	routes.Post("", handler.CreateTransactionType)
-	routes.Get(":id", handler.GetTransactionTypeByID)
-	routes.Put("", handler.UpdateTransactionType)
-	routes.Delete(":id", handler.DeleteTransactionType)
 	routes.Get("", handler.GetAllTransactionTypes)
+	routes.Get("/:id", handler.GetTransactionTypeByID)
+	routes.Put("", handler.UpdateTransactionType)
+	routes.Delete("/:id", handler.DeleteTransactionType)
 }

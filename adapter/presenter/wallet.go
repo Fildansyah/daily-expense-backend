@@ -1,32 +1,32 @@
 package presenter
 
 import (
+	"time"
+
 	"expense.com/m/entity"
-	"expense.com/m/model"
-	"expense.com/m/model/concern"
 )
 
 type WalletPresenter struct {
-	concern.BaseFields
-	UserID    string
-	Users     model.Users
-	Name      string
-	Balance   float64
-	Currency  string
-	Type      string
-	Color     string
-	Icon      string
-	IsExclude bool
+	ID        string    `json:"id"`
+	UserID    string    `json:"userId"`
+	Name      string    `json:"name"`
+	Balance   float64   `json:"balance"`
+	Currency  string    `json:"currency"`
+	Type      string    `json:"type"`
+	Color     string    `json:"color"`
+	Icon      string    `json:"icon"`
+	IsExclude bool      `json:"isExclude"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 func (v WalletPresenter) FromDTO(dto *entity.WalletDTO) *WalletPresenter {
+	if dto == nil {
+		return nil
+	}
+
 	return &WalletPresenter{
-		BaseFields: concern.BaseFields{
-			ID:        dto.ID,
-			CreatedAt: dto.CreatedAt,
-		},
+		ID:        dto.ID,
 		UserID:    dto.UserID,
-		Users:     dto.Users,
 		Name:      dto.Name,
 		Balance:   dto.Balance,
 		Currency:  dto.Currency,
@@ -34,5 +34,6 @@ func (v WalletPresenter) FromDTO(dto *entity.WalletDTO) *WalletPresenter {
 		Color:     dto.Color,
 		Icon:      dto.Icon,
 		IsExclude: dto.IsExclude,
+		CreatedAt: dto.CreatedAt,
 	}
 }

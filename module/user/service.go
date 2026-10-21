@@ -1,6 +1,8 @@
 package user
 
-import "expense.com/m/entity"
+import (
+	"expense.com/m/entity"
+)
 
 type UserService struct {
 	repo *UserRepository
@@ -18,10 +20,16 @@ func (s *UserService) GetCurrentUser(id string) (*entity.UserDTO, error) {
 	return s.repo.FindUserByID(id)
 }
 
-func (s *UserService) CreateUser(input *entity.UserDTO) (*entity.UserDTO, error) {
-	return s.repo.CreateUser(input)
-}
+func (s *UserService) CreateUser(input *entity.RegisterRequest) (*entity.UserDTO, error) {
+	input.Normalize()
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
 
-func (s *UserService) LoginUser(input *entity.SignInRequest) (*entity.SignInResponse, error) {
-	return s.repo.LoginUser(input)
+	return s.repo.CreateUser(&entity.UserDTO{
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+		Email:     input.Email,
+		Password:  input.Password,
+	})
 }

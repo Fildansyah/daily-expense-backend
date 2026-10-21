@@ -16,18 +16,18 @@ func (s *TransactionTypeService) CreateTransactionType(dto *entity.TransactionTy
 	return s.repo.CreateTransactionType(dto)
 }
 
-func (s *TransactionTypeService) GetTransactionTypeByID(id string) (*entity.TransactionTypeDTO, error) {
-	return s.repo.FindTransactionTypeByID(id)
+func (s *TransactionTypeService) GetTransactionTypeByID(id, userID string) (*entity.TransactionTypeDTO, error) {
+	return s.repo.FindTransactionTypeByID(id, userID)
 }
 
 func (s *TransactionTypeService) UpdateTransactionType(dto *entity.TransactionTypeDTO) error {
 	return s.repo.UpdateTransactionType(dto)
 }
 
-func (s *TransactionTypeService) DeleteTransactionType(id string) error {
-	return s.repo.DeleteTransactionType(id)
+func (s *TransactionTypeService) DeleteTransactionType(id, userID string) error {
+	return s.repo.DeleteTransactionType(id, userID)
 }
 
-func (s *TransactionTypeService) GetAllTransactionTypes() ([]*entity.TransactionTypeDTO, error) {
-	return s.repo.FindAllTransactionTypes()
+func (s *TransactionTypeService) GetAllTransactionTypes(userID string) ([]*entity.TransactionTypeDTO, error) {
+	return s.repo.FindAllTransactionTypes(userID)
 }

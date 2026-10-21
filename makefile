@@ -11,7 +11,7 @@ migrate-create:
 	migrate create -ext sql -dir migrations -seq $(name)
 
 migrate-up:
-	. ./.env && migrate -path ./migrations -database "$$DB_URL" -verbose up || echo "Migration up failed"
+	@if [ -z "$$DB_URL" ]; then . ./.env; fi; migrate -path ./migrations -database "$$DB_URL" -verbose up
 
 migrate-down:
-	. ./.env && migrate -path ./migrations -database "$$DB_URL" down || echo "Migration down failed"
+	@if [ -z "$$DB_URL" ]; then . ./.env; fi; migrate -path ./migrations -database "$$DB_URL" down
