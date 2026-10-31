@@ -1,50 +1,32 @@
 package entity
 
-import (
-	"expense.com/m/model"
-	"expense.com/m/model/concern"
-)
+import "time"
 
 type CategoryDTO struct {
 	CommonDTOFields
 
-	UserID            string `json:"-"`
-	Name              model.CategoryNameEnum
-	TransactionTypeId string
-	TransactionTypes  model.TransactionType
-	BgColor           string
-	Icon              string
+	UpdatedAt         time.Time `json:"updatedAt"`
+	UserID            string    `json:"-"`
+	Name              string    `json:"name"`
+	TransactionTypeId string    `json:"transactionTypeId"`
+	BgColor           string    `json:"bgColor"`
+	Icon              string    `json:"icon"`
+	ParentId          *string   `json:"parentId,omitempty"`
+	SortOrder         int       `json:"sortOrder"`
+	IsArchived        bool      `json:"isArchived"`
+
+	// Field turunan yang diisi service.
+	TransactionTypeName string         `json:"transactionTypeName,omitempty"`
+	TransactionCount    int64          `json:"transactionCount"`
+	Children            []*CategoryDTO `json:"children,omitempty"`
 }
 
-func (d *CategoryDTO) FromModel(m *model.Category) *CategoryDTO {
-	if m == nil {
-		return nil
-	}
-
-	return &CategoryDTO{
-		CommonDTOFields: CommonDTOFields{
-			ID:        m.ID,
-			CreatedAt: m.CreatedAt,
-		},
-		UserID:            m.UserID,
-		Name:              m.Name,
-		TransactionTypeId: m.TransactionTypeId,
-		TransactionTypes:  m.TransactionTypes,
-		BgColor:           m.BgColor,
-		Icon:              m.Icon,
-	}
+type CategoryReorderItem struct {
+	ID        string  `json:"id"`
+	ParentId  *string `json:"parentId"`
+	SortOrder int     `json:"sortOrder"`
 }
 
-func (d *CategoryDTO) ToModel() *model.Category {
-	return &model.Category{
-		BaseFields: concern.BaseFields{
-			ID:        d.ID,
-			CreatedAt: d.CreatedAt,
-		},
-		UserID:            d.UserID,
-		Name:              d.Name,
-		TransactionTypeId: d.TransactionTypeId,
-		BgColor:           d.BgColor,
-		Icon:              d.Icon,
-	}
+type CategoryReorderRequest struct {
+	Items []CategoryReorderItem `json:"items"`
 }

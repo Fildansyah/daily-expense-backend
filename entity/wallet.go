@@ -1,53 +1,42 @@
 package entity
 
-import (
-	"expense.com/m/model"
-	"expense.com/m/model/concern"
-)
+import "time"
 
 type WalletDTO struct {
 	CommonDTOFields
 
-	UserID    string  `json:"-"`
-	Name      string  `json:"name"`
-	Balance   float64 `json:"balance"`
-	Currency  string  `json:"currency"`
-	Type      string  `json:"type"`
-	Color     string  `json:"color"`
-	Icon      string  `json:"icon"`
-	IsExclude bool    `json:"isExclude"`
+	UserID         string    `json:"-"`
+	Name           string    `json:"name"`
+	Balance        float64   `json:"balance"`
+	OpeningBalance float64   `json:"openingBalance"`
+	Currency       string    `json:"currency"`
+	Type           string    `json:"type"`
+	Color          string    `json:"color"`
+	Icon           string    `json:"icon"`
+	IsExclude      bool      `json:"isExclude"`
+	IsArchived     bool      `json:"isArchived"`
+	CreditLimit    *float64  `json:"creditLimit,omitempty"`
+	StatementDay   *int      `json:"statementDay,omitempty"`
+	DueDay         *int      `json:"dueDay,omitempty"`
+	InterestRate   *float64  `json:"interestRate,omitempty"`
+	AccountNumber  string    `json:"accountNumber,omitempty"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+
+	// Field turunan yang dihitung service untuk kebutuhan presentasi.
+	Used        float64 `json:"used"`
+	Available   float64 `json:"available"`
+	Utilization float64 `json:"utilization"`
 }
 
-func (d *WalletDTO) FromModel(m *model.Wallet) *WalletDTO {
-	return &WalletDTO{
-		CommonDTOFields: CommonDTOFields{
-			ID:        m.ID,
-			CreatedAt: m.CreatedAt,
-		},
-		UserID:    m.UserID,
-		Name:      m.Name,
-		Balance:   m.Balance,
-		Currency:  m.Currency,
-		Type:      m.Type,
-		Color:     m.Color,
-		Icon:      m.Icon,
-		IsExclude: m.IsExclude,
-	}
+type WalletTypeSummaryDTO struct {
+	Type  string  `json:"type"`
+	Total float64 `json:"total"`
 }
 
-func (d *WalletDTO) ToModel() *model.Wallet {
-	return &model.Wallet{
-		BaseFields: concern.BaseFields{
-			ID:        d.ID,
-			CreatedAt: d.CreatedAt,
-		},
-		UserID:    d.UserID,
-		Name:      d.Name,
-		Balance:   d.Balance,
-		Currency:  d.Currency,
-		Type:      d.Type,
-		Color:     d.Color,
-		Icon:      d.Icon,
-		IsExclude: d.IsExclude,
-	}
+type WalletSummaryDTO struct {
+	TotalBalance float64                `json:"totalBalance"`
+	CreditUsed   float64                `json:"creditUsed"`
+	CreditLimit  float64                `json:"creditLimit"`
+	Available    float64                `json:"available"`
+	ByType       []WalletTypeSummaryDTO `json:"byType"`
 }

@@ -17,8 +17,8 @@ func NewWalletHandler(service *wallet.WalletService) *WalletHandler {
 }
 
 func (w *WalletHandler) CreateWallet(c *fiber.Ctx) error {
-	authID, ok := c.Locals("userID").(string)
-	if !ok || authID == "" {
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
 		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
 	}
 
@@ -26,13 +26,11 @@ func (w *WalletHandler) CreateWallet(c *fiber.Ctx) error {
 	if err := c.BodyParser(&dto); err != nil {
 		return base_response.Error(c, fiber.StatusBadRequest, "Body request tidak valid")
 	}
+	dto.UserID = userID
 
-	// UserID selalu dari token, bukan dari body request.
-	dto.UserID = authID
-
-	result, err := w.service.CreateWallet(&dto)
+	result, err := w.service.CreateWallet(c.Context(), &dto)
 	if err != nil {
-		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
+		return respondError(c, err)
 	}
 
 	return base_response.Created(c, new(presenter.WalletPresenter).FromDTO(result))
@@ -45,9 +43,9 @@ func (w *WalletHandler) GetMyWallets(c *fiber.Ctx) error {
 		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
 	}
 
-	result, err := w.service.FindWalletByUserID(c.Context(), userID)
+	result, err := w.service.FindWalletByUserID(c.Context(), userID, c.QueryBool("includeArchived", false))
 	if err != nil {
-		return base_response.Error(c, fiber.StatusInternalServerError, err.Error())
+		return respondError(c, err)
 	}
 
 	resp := make([]presenter.WalletPresenter, len(result))
@@ -56,4 +54,66 @@ func (w *WalletHandler) GetMyWallets(c *fiber.Ctx) error {
 	}
 
 	return base_response.Success(c, resp)
+}
+
+func (w *WalletHandler) GetWallet(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
+	}
+
+	result, err := w.service.GetWallet(c.Context(), c.Params("id"), userID)
+	if err != nil {
+		return respondError(c, err)
+	}
+
+	return base_response.Success(c, new(presenter.WalletPresenter).FromDTO(result))
+}
+
+func (w *WalletHandler) UpdateWallet(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
+	}
+
+	var dto entity.WalletDTO
+	if err := c.BodyParser(&dto); err != nil {
+		return base_response.Error(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+	dto.ID = c.Params("id")
+	dto.UserID = userID
+
+	result, err := w.service.UpdateWallet(c.Context(), &dto)
+	if err != nil {
+		return respondError(c, err)
+	}
+
+	return base_response.Success(c, new(presenter.WalletPresenter).FromDTO(result))
+}
+
+func (w *WalletHandler) DeleteWallet(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
+	}
+
+	if err := w.service.DeleteWallet(c.Context(), c.Params("id"), userID, c.QueryBool("archive", false)); err != nil {
+		return respondError(c, err)
+	}
+
+	return base_response.Success(c, fiber.Map{"message": "Akun berhasil diproses"})
+}
+
+func (w *WalletHandler) GetSummary(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return base_response.Error(c, fiber.StatusUnauthorized, "Invalid user ID")
+	}
+
+	result, err := w.service.GetSummary(c.Context(), userID)
+	if err != nil {
+		return respondError(c, err)
+	}
+
+	return base_response.Success(c, new(presenter.WalletSummaryPresenter).FromDTO(result))
 }

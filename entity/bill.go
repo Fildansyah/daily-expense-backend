@@ -1,93 +1,69 @@
 package entity
 
-import (
-	"time"
-
-	"expense.com/m/model"
-	"expense.com/m/model/concern"
-	"gorm.io/gorm"
-)
+import "time"
 
 type BillDTO struct {
 	CommonDTOFields
 
 	UpdatedAt  time.Time `json:"updatedAt"`
-	UserID     string    `json:"user_id"`
+	UserID     string    `json:"-"`
 	Lender     string    `json:"lender"`
 	Amount     float64   `json:"amount"`
 	PaidAmount float64   `json:"paidAmount"`
 	DueDate    string    `json:"dueDate"`
 	Deskripsi  string    `json:"deskripsi"`
-}
 
-// ComputeBillStatus adalah single source of truth untuk status tagihan.
-// SQL CASE pada filter status di repository HARUS sinkron dengan fungsi ini.
-func ComputeBillStatus(amount, paid float64) string {
-	switch {
-	case paid <= 0:
-		return "belum_bayar"
-	case paid >= amount:
-		return "lunas"
-	default:
-		return "sebagian"
-	}
-}
+	WalletId   *string `json:"walletId,omitempty"`
+	CategoryId *string `json:"categoryId,omitempty"`
 
-func (d *BillDTO) FromModel(m *model.Bill) *BillDTO {
-	var deletedAt *time.Time
-	if m.DeletedAt != nil && m.DeletedAt.Valid {
-		t := m.DeletedAt.Time
-		deletedAt = &t
-	}
+	InstallmentTotal *int     `json:"installmentTotal,omitempty"`
+	InstallmentIndex *int     `json:"installmentIndex,omitempty"`
+	InterestRate     *float64 `json:"interestRate,omitempty"`
 
-	return &BillDTO{
-		CommonDTOFields: CommonDTOFields{
-			ID:        m.ID,
-			CreatedAt: m.CreatedAt,
-			DeletedAt: deletedAt,
-		},
-		UpdatedAt:  m.UpdatedAt,
-		UserID:     m.UserID,
-		Lender:     m.Lender,
-		Amount:     m.Amount,
-		PaidAmount: m.PaidAmount,
-		DueDate:    m.DueDate.Format("2006-01-02"),
-		Deskripsi:  m.Deskripsi,
-	}
-}
+	RemindH3  bool   `json:"remindH3"`
+	RemindH1  bool   `json:"remindH1"`
+	RemindDue bool   `json:"remindDue"`
+	Currency  string `json:"currency"`
 
-func (d *BillDTO) ToModel() *model.Bill {
-	dueDate, _ := time.Parse("2006-01-02", d.DueDate)
-
-	m := &model.Bill{
-		BaseFields: concern.BaseFields{
-			ID:        d.ID,
-			CreatedAt: d.CreatedAt,
-		},
-		UserID:     d.UserID,
-		Lender:     d.Lender,
-		Amount:     d.Amount,
-		PaidAmount: d.PaidAmount,
-		DueDate:    dueDate,
-		Deskripsi:  d.Deskripsi,
-	}
-
-	if d.DeletedAt != nil {
-		m.DeletedAt = &gorm.DeletedAt{Time: *d.DeletedAt, Valid: true}
-	}
-
-	return m
+	// Field turunan yang dihitung service.
+	RemainingAmount float64           `json:"remainingAmount"`
+	Status          string            `json:"status"`
+	IsOverdue       bool              `json:"isOverdue"`
+	DaysUntilDue    int               `json:"daysUntilDue"`
+	Wallet          *WalletBriefDTO   `json:"wallet,omitempty"`
+	Category        *CategoryBriefDTO `json:"category,omitempty"`
 }
 
 type BillFilter struct {
-	From   string
-	To     string
-	Lender string
-	Status string
-	Q      string
+	From     string
+	To       string
+	Lender   string
+	Status   string
+	WalletId string
+	Q        string
+	Page     int
+	Limit    int
+	Sort     string
 }
 
-type BillSummaryLenderDTO struct {
+type BillPaymentDTO struct {
+	CommonDTOFields
+
+	BillId        string    `json:"billId"`
+	UserID        string    `json:"-"`
+	Amount        float64   `json:"amount"`
+	PaidAt        string    `json:"paidAt"`
+	WalletId      *string   `json:"walletId,omitempty"`
+	Note          string    `json:"note"`
+	TransactionId *string   `json:"transactionId,omitempty"`
+	CreatedAt     time.Time `json:"createdAt"`
+
+	// Field khusus request: buat transaksi pengeluaran otomatis.
+	CreateTransaction bool    `json:"createTransaction"`
+	CategoryId        *string `json:"categoryId,omitempty"`
+}
+
+type BillLenderSummaryDTO struct {
 	Lender    string  `json:"lender"`
 	Count     int64   `json:"count"`
 	Total     float64 `json:"total"`
@@ -95,10 +71,31 @@ type BillSummaryLenderDTO struct {
 	Remaining float64 `json:"remaining"`
 }
 
+type BillStatusSummaryDTO struct {
+	Status    string  `json:"status"`
+	Count     int64   `json:"count"`
+	Total     float64 `json:"total"`
+	Paid      float64 `json:"paid"`
+	Remaining float64 `json:"remaining"`
+}
+
+type BillWalletSummaryDTO struct {
+	WalletId   string  `json:"walletId,omitempty"`
+	WalletName string  `json:"walletName,omitempty"`
+	Count      int64   `json:"count"`
+	Total      float64 `json:"total"`
+	Paid       float64 `json:"paid"`
+	Remaining  float64 `json:"remaining"`
+}
+
 type BillSummaryDTO struct {
-	Total        float64                 `json:"total"`
-	Paid         float64                 `json:"paid"`
-	Remaining    float64                 `json:"remaining"`
-	RemainingAll float64                 `json:"remainingAll"`
-	PerLender    []*BillSummaryLenderDTO `json:"perLender"`
+	Total        float64                `json:"total"`
+	Paid         float64                `json:"paid"`
+	Remaining    float64                `json:"remaining"`
+	RemainingAll float64                `json:"remainingAll"`
+	OverdueTotal float64                `json:"overdueTotal"`
+	DueThisWeek  float64                `json:"dueThisWeek"`
+	PerLender    []BillLenderSummaryDTO `json:"perLender"`
+	ByStatus     []BillStatusSummaryDTO `json:"byStatus"`
+	ByWallet     []BillWalletSummaryDTO `json:"byWallet"`
 }

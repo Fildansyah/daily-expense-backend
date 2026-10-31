@@ -1,6 +1,10 @@
 package model
 
-import "expense.com/m/model/concern"
+import (
+	"time"
+
+	"expense.com/m/model/concern"
+)
 
 type CategoryNameEnum string
 
@@ -31,4 +35,8 @@ type Category struct {
 	TransactionTypes  TransactionType `gorm:"foreignKey:TransactionTypeId;references:ID"`
 	BgColor           string
 	Icon              string
+	ParentId          *string
+	SortOrder         int
+	IsArchived        bool
+	UpdatedAt         time.Time
 }

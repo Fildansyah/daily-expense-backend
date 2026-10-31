@@ -15,5 +15,20 @@ type Bill struct {
 	PaidAmount float64
 	DueDate    time.Time
 	Deskripsi  string
-	UpdatedAt  time.Time
+
+	WalletId   *string
+	Wallet     *Wallet `gorm:"foreignKey:WalletId;references:ID"`
+	CategoryId *string
+	Category   *Category `gorm:"foreignKey:CategoryId;references:ID"`
+
+	InstallmentTotal *int
+	InstallmentIndex *int
+	InterestRate     *float64
+
+	RemindH3  bool
+	RemindH1  bool
+	RemindDue bool
+
+	Currency  string
+	UpdatedAt time.Time
 }

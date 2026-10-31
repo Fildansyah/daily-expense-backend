@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS bill_payments;
+
+ALTER TABLE bills ALTER COLUMN paid_amount TYPE FLOAT USING paid_amount::FLOAT;
+ALTER TABLE bills ALTER COLUMN amount TYPE FLOAT USING amount::FLOAT;

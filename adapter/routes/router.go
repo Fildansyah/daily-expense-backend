@@ -8,12 +8,16 @@ import (
 	"expense.com/m/middlewares"
 	authmodule "expense.com/m/module/auth"
 	"expense.com/m/module/bill"
+	"expense.com/m/module/budget"
 	"expense.com/m/module/category"
 	"expense.com/m/module/lender"
+	"expense.com/m/module/report"
+	"expense.com/m/module/transaction"
 	"expense.com/m/module/transaction_type"
 	"expense.com/m/module/user"
 	"expense.com/m/module/wallet"
 	"expense.com/m/shared/token"
+	"expense.com/m/shared/tx"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
@@ -50,27 +54,47 @@ func InitRouter(app *fiber.App, db *gorm.DB, authCfg *config.AuthConfig, tokenMa
 	transactionTypehandlr := handlers.NewTransactionTypeHandler(transactionTypeSvc)
 	RegisterTransactionTypeRoutes(protectedGroup, transactionTypehandlr)
 
-	//category
-	categoryRepo := category.NewCategoryRepository(db)
-	categorySvc := category.NewCategoryService(categoryRepo)
-	categoryHandler := handlers.NewCategoryHandler(categorySvc)
-	RegisterCategoryRoutes(protectedGroup, categoryHandler)
+	txManager := tx.NewManager(db)
 
 	//wallet
 	walletRepo := wallet.NewWalletRepository(db)
-	walletSvc := wallet.NewWalletService(walletRepo)
+	walletSvc := wallet.NewWalletService(walletRepo, txManager)
 	walletHandler := handlers.NewWalletHandler(walletSvc)
-	RegisterWalletRoutes(protectedGroup, walletHandler)
+
+	//category
+	categoryRepo := category.NewCategoryRepository(db)
+	categorySvc := category.NewCategoryService(categoryRepo, txManager)
+	categoryHandler := handlers.NewCategoryHandler(categorySvc)
+	RegisterCategoryRoutes(protectedGroup, categoryHandler)
+
+	//transaction
+	transactionRepo := transaction.NewTransactionRepository(db)
+	transactionSvc := transaction.NewTransactionService(transactionRepo, walletRepo, txManager)
+	transactionHandler := handlers.NewTransactionHandler(transactionSvc)
+	RegisterTransactionRoutes(protectedGroup, transactionHandler)
+
+	//budget
+	budgetRepo := budget.NewBudgetRepository(db)
+	budgetSvc := budget.NewBudgetService(budgetRepo, txManager, categorySvc, transactionSvc)
+	budgetHandler := handlers.NewBudgetHandler(budgetSvc)
+	RegisterBudgetRoutes(protectedGroup, budgetHandler)
+
+	RegisterWalletRoutes(protectedGroup, walletHandler, transactionHandler)
 
 	//bill
 	billRepo := bill.NewBillRepository(db)
-	billSvc := bill.NewBillService(billRepo)
+	billSvc := bill.NewBillService(billRepo, txManager, walletRepo, categoryRepo, transactionSvc)
 	billHandler := handlers.NewBillHandler(billSvc)
 	RegisterBillRoutes(protectedGroup, billHandler)
 
 	//lender
 	lenderRepo := lender.NewLenderRepository(db)
-	lenderSvc := lender.NewLenderService(lenderRepo)
+	lenderSvc := lender.NewLenderService(lenderRepo, txManager)
 	lenderHandler := handlers.NewLenderHandler(lenderSvc)
 	RegisterLenderRoutes(protectedGroup, lenderHandler)
+
+	//report & dashboard
+	reportSvc := report.NewService(transactionSvc, billSvc, walletSvc, categorySvc, budgetSvc)
+	reportHandler := handlers.NewReportHandler(reportSvc)
+	RegisterReportRoutes(protectedGroup, reportHandler)
 }
