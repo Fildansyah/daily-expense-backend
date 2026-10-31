@@ -20,11 +20,12 @@ import (
 const dateLayout = "2006-01-02"
 
 type LenderRow struct {
-	Lender    string
-	Count     int64
-	Total     float64
-	Paid      float64
-	Remaining float64
+	LenderId   string
+	LenderName string
+	Count      int64
+	Total      float64
+	Paid       float64
+	Remaining  float64
 }
 
 type StatusRow struct {
@@ -74,7 +75,7 @@ func (r *BillRepository) Update(ctx context.Context, input *entity.BillDTO) erro
 		Model(&model.Bill{}).
 		Where("id = ? AND user_id = ?", input.ID, input.UserID).
 		Updates(map[string]interface{}{
-			"lender":            input.Lender,
+			"lender_id":         input.LenderId,
 			"amount":            input.Amount,
 			"paid_amount":       input.PaidAmount,
 			"due_date":          parseDate(input.DueDate),
@@ -119,32 +120,34 @@ func (r *BillRepository) FindByIDForUpdate(ctx context.Context, id, userID strin
 
 func (r *BillRepository) FindAll(ctx context.Context, userID string, filter entity.BillFilter) ([]*entity.BillDTO, int64, error) {
 	base := func() *gorm.DB {
-		query := tx.DB(ctx, r.db).Model(&model.Bill{}).Where("user_id = ?", userID)
+		query := tx.DB(ctx, r.db).Model(&model.Bill{}).Where("bills.user_id = ?", userID)
 
 		if filter.From != "" {
-			query = query.Where("due_date >= ?", parseDate(filter.From))
+			query = query.Where("bills.due_date >= ?", parseDate(filter.From))
 		}
 		if filter.To != "" {
-			query = query.Where("due_date <= ?", parseDate(filter.To))
+			query = query.Where("bills.due_date <= ?", parseDate(filter.To))
 		}
-		if filter.Lender != "" {
-			query = query.Where("lender = ?", filter.Lender)
+		if filter.LenderId != "" {
+			query = query.Where("bills.lender_id = ?", filter.LenderId)
 		}
 		if filter.WalletId != "" {
-			query = query.Where("wallet_id = ?", filter.WalletId)
+			query = query.Where("bills.wallet_id = ?", filter.WalletId)
 		}
 		if filter.Q != "" {
 			like := "%" + filter.Q + "%"
-			query = query.Where("(lender ILIKE ? OR deskripsi ILIKE ?)", like, like)
+			query = query.
+				Joins("LEFT JOIN lenders AS lender_search ON lender_search.id = bills.lender_id").
+				Where("(lender_search.name ILIKE ? OR bills.deskripsi ILIKE ?)", like, like)
 		}
 
 		switch filter.Status {
 		case "lunas":
-			query = query.Where("paid_amount >= amount")
+			query = query.Where("bills.paid_amount >= bills.amount")
 		case "sebagian":
-			query = query.Where("paid_amount > 0 AND paid_amount < amount")
+			query = query.Where("bills.paid_amount > 0 AND bills.paid_amount < bills.amount")
 		case "belum_bayar":
-			query = query.Where("paid_amount <= 0")
+			query = query.Where("bills.paid_amount <= 0")
 		}
 
 		return query
@@ -157,6 +160,7 @@ func (r *BillRepository) FindAll(ctx context.Context, userID string, filter enti
 
 	var rows []model.Bill
 	err := base().
+		Preload("Lender").
 		Preload("Wallet").
 		Preload("Category").
 		Order(billOrder(filter.Sort)).
@@ -274,9 +278,14 @@ func (r *BillRepository) Totals(ctx context.Context, userID string, filter entit
 func (r *BillRepository) AggregateByLender(ctx context.Context, userID string, filter entity.BillFilter) ([]LenderRow, error) {
 	var rows []LenderRow
 	err := periodQuery(tx.DB(ctx, r.db), userID, filter).
-		Select("lender, COUNT(*) AS count, COALESCE(SUM(amount), 0) AS total, COALESCE(SUM(paid_amount), 0) AS paid, COALESCE(SUM(amount - paid_amount), 0) AS remaining").
-		Group("lender").
-		Order("lender ASC").
+		Select(`bills.lender_id AS lender_id, lenders.name AS lender_name,
+			COUNT(*) AS count,
+			COALESCE(SUM(bills.amount), 0) AS total,
+			COALESCE(SUM(bills.paid_amount), 0) AS paid,
+			COALESCE(SUM(bills.amount - bills.paid_amount), 0) AS remaining`).
+		Joins("JOIN lenders ON lenders.id = bills.lender_id AND lenders.deleted_at IS NULL").
+		Group("bills.lender_id, lenders.name").
+		Order("lenders.name ASC").
 		Scan(&rows).Error
 	return rows, err
 }
@@ -303,7 +312,7 @@ func (r *BillRepository) AggregateByWallet(ctx context.Context, userID string, f
 			COALESCE(SUM(bills.amount), 0) AS total,
 			COALESCE(SUM(bills.paid_amount), 0) AS paid,
 			COALESCE(SUM(bills.amount - bills.paid_amount), 0) AS remaining`).
-		Joins("LEFT JOIN wallets ON wallets.id = bills.wallet_id").
+		Joins("LEFT JOIN wallets ON wallets.id = bills.wallet_id AND wallets.deleted_at IS NULL").
 		Group("bills.wallet_id, wallets.name").
 		Order("wallet_name ASC").
 		Scan(&rows).Error
@@ -313,7 +322,7 @@ func (r *BillRepository) AggregateByWallet(ctx context.Context, userID string, f
 func (r *BillRepository) OutstandingAll(ctx context.Context, userID string) (float64, error) {
 	var total float64
 	err := tx.DB(ctx, r.db).Model(&model.Bill{}).
-		Where("user_id = ?", userID).
+		Where("bills.user_id = ?", userID).
 		Select("COALESCE(SUM(amount - paid_amount), 0)").
 		Scan(&total).Error
 	return total, err
@@ -322,7 +331,7 @@ func (r *BillRepository) OutstandingAll(ctx context.Context, userID string) (flo
 func (r *BillRepository) OverdueTotal(ctx context.Context, userID string, today string) (float64, error) {
 	var total float64
 	err := tx.DB(ctx, r.db).Model(&model.Bill{}).
-		Where("user_id = ? AND due_date < ? AND paid_amount < amount", userID, parseDate(today)).
+		Where("bills.user_id = ? AND bills.due_date < ? AND bills.paid_amount < bills.amount", userID, parseDate(today)).
 		Select("COALESCE(SUM(amount - paid_amount), 0)").
 		Scan(&total).Error
 	return total, err
@@ -331,7 +340,7 @@ func (r *BillRepository) OverdueTotal(ctx context.Context, userID string, today 
 func (r *BillRepository) DueTotalBetween(ctx context.Context, userID, from, to string) (float64, error) {
 	var total float64
 	err := tx.DB(ctx, r.db).Model(&model.Bill{}).
-		Where("user_id = ? AND due_date BETWEEN ? AND ? AND paid_amount < amount", userID, parseDate(from), parseDate(to)).
+		Where("bills.user_id = ? AND bills.due_date BETWEEN ? AND ? AND bills.paid_amount < bills.amount", userID, parseDate(from), parseDate(to)).
 		Select("COALESCE(SUM(amount - paid_amount), 0)").
 		Scan(&total).Error
 	return total, err
@@ -339,7 +348,8 @@ func (r *BillRepository) DueTotalBetween(ctx context.Context, userID, from, to s
 
 func (r *BillRepository) findByID(db *gorm.DB, id, userID string) (*entity.BillDTO, error) {
 	var modelEntity model.Bill
-	err := db.Preload("Wallet").
+	err := db.Preload("Lender").
+		Preload("Wallet").
 		Preload("Category").
 		Where("id = ? AND user_id = ?", id, userID).
 		First(&modelEntity).Error
@@ -353,12 +363,14 @@ func (r *BillRepository) findByID(db *gorm.DB, id, userID string) (*entity.BillD
 }
 
 func periodQuery(db *gorm.DB, userID string, filter entity.BillFilter) *gorm.DB {
-	query := db.Model(&model.Bill{}).Where("user_id = ?", userID)
+	// Prefix "bills." wajib karena AggregateByWallet men-join tabel wallets
+	// yang juga punya kolom user_id.
+	query := db.Model(&model.Bill{}).Where("bills.user_id = ?", userID)
 	if filter.From != "" {
-		query = query.Where("due_date >= ?", parseDate(filter.From))
+		query = query.Where("bills.due_date >= ?", parseDate(filter.From))
 	}
 	if filter.To != "" {
-		query = query.Where("due_date <= ?", parseDate(filter.To))
+		query = query.Where("bills.due_date <= ?", parseDate(filter.To))
 	}
 	return query
 }
@@ -371,7 +383,6 @@ func billOrder(sort string) string {
 		"due_date":   "due_date",
 		"amount":     "amount",
 		"created_at": "created_at",
-		"lender":     "lender",
 	}
 
 	column, ok := columns[key]
@@ -389,6 +400,7 @@ func billOrder(sort string) string {
 func (r *BillRepository) FindRange(ctx context.Context, userID, from, to string) ([]*entity.BillDTO, error) {
 	var rows []model.Bill
 	err := tx.DB(ctx, r.db).
+		Preload("Lender").
 		Preload("Wallet").
 		Preload("Category").
 		Where("user_id = ? AND due_date BETWEEN ? AND ?", userID, parseDate(from), parseDate(to)).
@@ -413,7 +425,7 @@ func toModel(input *entity.BillDTO) *model.Bill {
 			CreatedAt: input.CreatedAt,
 		},
 		UserID:           input.UserID,
-		Lender:           input.Lender,
+		LenderId:         input.LenderId,
 		Amount:           input.Amount,
 		PaidAmount:       input.PaidAmount,
 		Deskripsi:        input.Deskripsi,
@@ -441,7 +453,7 @@ func fromModel(modelEntity *model.Bill) *entity.BillDTO {
 		},
 		UpdatedAt:        modelEntity.UpdatedAt,
 		UserID:           modelEntity.UserID,
-		Lender:           modelEntity.Lender,
+		LenderId:         modelEntity.LenderId,
 		Amount:           modelEntity.Amount,
 		PaidAmount:       modelEntity.PaidAmount,
 		DueDate:          modelEntity.DueDate.Format(dateLayout),
@@ -457,6 +469,16 @@ func fromModel(modelEntity *model.Bill) *entity.BillDTO {
 		Currency:         modelEntity.Currency,
 	}
 
+	if modelEntity.Lender != nil && modelEntity.Lender.ID != "" {
+		dto.Lender = &entity.LenderDTO{
+			CommonDTOFields: entity.CommonDTOFields{
+				ID:        modelEntity.Lender.ID,
+				CreatedAt: modelEntity.Lender.CreatedAt,
+			},
+			UserID: modelEntity.Lender.UserID,
+			Name:   modelEntity.Lender.Name,
+		}
+	}
 	if modelEntity.Wallet != nil && modelEntity.Wallet.ID != "" {
 		dto.Wallet = &entity.WalletBriefDTO{
 			ID:    modelEntity.Wallet.ID,

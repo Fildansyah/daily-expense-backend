@@ -45,7 +45,7 @@ func (h *BillHandler) GetBills(c *fiber.Ctx) error {
 	filter := entity.BillFilter{
 		From:     c.Query("from"),
 		To:       c.Query("to"),
-		Lender:   c.Query("lender"),
+		LenderId: c.Query("lenderId"),
 		Status:   c.Query("status"),
 		WalletId: c.Query("walletId"),
 		Q:        c.Query("q"),

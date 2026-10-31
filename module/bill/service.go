@@ -26,6 +26,10 @@ type CategoryReader interface {
 	FindByID(ctx context.Context, id, userID string) (*entity.CategoryDTO, error)
 }
 
+type LenderReader interface {
+	FindByID(ctx context.Context, id, userID string) (*entity.LenderDTO, error)
+}
+
 type ExpenseRecorder interface {
 	Create(ctx context.Context, dto *entity.TransactionDTO) (*entity.TransactionDTO, error)
 	Delete(ctx context.Context, id, userID string) error
@@ -36,15 +40,17 @@ type BillService struct {
 	txm        *tx.Manager
 	wallets    WalletReader
 	categories CategoryReader
+	lenders    LenderReader
 	expenses   ExpenseRecorder
 }
 
-func NewBillService(repo *BillRepository, txm *tx.Manager, wallets WalletReader, categories CategoryReader, expenses ExpenseRecorder) *BillService {
+func NewBillService(repo *BillRepository, txm *tx.Manager, wallets WalletReader, categories CategoryReader, lenders LenderReader, expenses ExpenseRecorder) *BillService {
 	return &BillService{
 		repo:       repo,
 		txm:        txm,
 		wallets:    wallets,
 		categories: categories,
+		lenders:    lenders,
 		expenses:   expenses,
 	}
 }
@@ -62,8 +68,13 @@ func (s *BillService) CreateBill(ctx context.Context, dto *entity.BillDTO) (*ent
 		return nil, err
 	}
 
-	enrichBill(created)
-	return created, nil
+	full, err := s.repo.FindByID(ctx, created.ID, dto.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	enrichBill(full)
+	return full, nil
 }
 
 func (s *BillService) UpdateBill(ctx context.Context, dto *entity.BillDTO) (*entity.BillDTO, error) {
@@ -245,7 +256,11 @@ func (s *BillService) GetBillSummary(ctx context.Context, userID, from, to strin
 
 	for i, row := range lenders {
 		summary.PerLender[i] = entity.BillLenderSummaryDTO{
-			Lender:    row.Lender,
+			LenderId: row.LenderId,
+			Lender: &entity.LenderDTO{
+				CommonDTOFields: entity.CommonDTOFields{ID: row.LenderId},
+				Name:            row.LenderName,
+			},
 			Count:     row.Count,
 			Total:     money.Round2(row.Total),
 			Paid:      money.Round2(row.Paid),
@@ -330,13 +345,18 @@ func (s *BillService) AddPayment(ctx context.Context, billID, userID string, dto
 				return fmt.Errorf("%w: categoryId wajib diisi untuk membuat transaksi", apperror.ErrValidation)
 			}
 
+			lenderName := "Tagihan"
+			if bill.Lender != nil && strings.TrimSpace(bill.Lender.Name) != "" {
+				lenderName = bill.Lender.Name
+			}
+
 			createdTransaction, err = s.expenses.Create(ctx, &entity.TransactionDTO{
 				UserID:     userID,
 				Type:       "EXPENSE",
 				WalletId:   *dto.WalletId,
 				CategoryId: categoryID,
 				Amount:     dto.Amount,
-				Memo:       "Bayar " + bill.Lender,
+				Memo:       "Bayar " + lenderName,
 				Date:       dto.PaidAt,
 			})
 			if err != nil {
@@ -403,6 +423,10 @@ func (s *BillService) DeletePayment(ctx context.Context, billID, paymentID, user
 }
 
 func (s *BillService) resolveReferences(ctx context.Context, dto *entity.BillDTO) error {
+	if _, err := s.lenders.FindByID(ctx, dto.LenderId, dto.UserID); err != nil {
+		return err
+	}
+
 	if dto.WalletId != nil {
 		wallets, err := s.wallets.FindByIDs(ctx, dto.UserID, []string{*dto.WalletId})
 		if err != nil {
@@ -423,7 +447,7 @@ func (s *BillService) resolveReferences(ctx context.Context, dto *entity.BillDTO
 }
 
 func prepareBill(dto *entity.BillDTO) error {
-	dto.Lender = strings.TrimSpace(dto.Lender)
+	dto.LenderId = strings.TrimSpace(dto.LenderId)
 	dto.Deskripsi = strings.TrimSpace(dto.Deskripsi)
 	dto.Currency = strings.ToUpper(strings.TrimSpace(dto.Currency))
 	if dto.Currency == "" {
@@ -434,8 +458,8 @@ func prepareBill(dto *entity.BillDTO) error {
 	dto.Amount = money.Round2(dto.Amount)
 	dto.PaidAmount = money.Round2(dto.PaidAmount)
 
-	if dto.Lender == "" {
-		return fmt.Errorf("%w: lender wajib diisi", apperror.ErrValidation)
+	if dto.LenderId == "" {
+		return fmt.Errorf("%w: lenderId wajib diisi", apperror.ErrValidation)
 	}
 	if dto.Amount <= 0 {
 		return fmt.Errorf("%w: amount harus lebih dari 0", apperror.ErrValidation)
@@ -539,7 +563,7 @@ func normalizeBillFilter(filter *entity.BillFilter) error {
 	if filter.Limit > 100 {
 		filter.Limit = 100
 	}
-	filter.Lender = strings.TrimSpace(filter.Lender)
+	filter.LenderId = strings.TrimSpace(filter.LenderId)
 	filter.Status = strings.ToLower(strings.TrimSpace(filter.Status))
 
 	switch filter.Status {

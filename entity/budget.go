@@ -27,8 +27,9 @@ type BudgetPayload struct {
 }
 
 type BudgetCopyPayload struct {
-	FromMonth string `json:"fromMonth"`
-	ToMonth   string `json:"toMonth"`
+	FromMonth    string `json:"fromMonth"`
+	ToMonth      string `json:"toMonth"`
+	SkipExisting *bool  `json:"skipExisting"`
 }
 
 type BudgetUnbudgetedDTO struct {

@@ -184,7 +184,7 @@ func (s *BudgetService) DeleteBudget(ctx context.Context, userID, id string) err
 	return s.repo.Delete(ctx, id, userID)
 }
 
-func (s *BudgetService) Copy(ctx context.Context, userID, fromMonth, toMonth string) (int, error) {
+func (s *BudgetService) Copy(ctx context.Context, userID, fromMonth, toMonth string, skipExisting bool) (int, error) {
 	source, err := normalizeMonth(fromMonth)
 	if err != nil {
 		return 0, err
@@ -201,12 +201,24 @@ func (s *BudgetService) Copy(ctx context.Context, userID, fromMonth, toMonth str
 			return err
 		}
 
+		targetBudgets, err := s.repo.ListByMonth(ctx, userID, target)
+		if err != nil {
+			return err
+		}
+		targetByCategory := make(map[string]*entity.BudgetDTO, len(targetBudgets))
+		for _, budget := range targetBudgets {
+			targetByCategory[budget.CategoryId] = budget
+		}
+
 		for _, item := range budgets {
-			exists, err := s.repo.Exists(ctx, userID, item.CategoryId, target, "")
-			if err != nil {
-				return err
-			}
-			if exists {
+			if existing, ok := targetByCategory[item.CategoryId]; ok {
+				if skipExisting {
+					continue
+				}
+				if err := s.repo.UpdateAmount(ctx, existing.ID, userID, item.Amount); err != nil {
+					return err
+				}
+				created++
 				continue
 			}
 

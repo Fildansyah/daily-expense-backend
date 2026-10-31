@@ -81,17 +81,17 @@ func InitRouter(app *fiber.App, db *gorm.DB, authCfg *config.AuthConfig, tokenMa
 
 	RegisterWalletRoutes(protectedGroup, walletHandler, transactionHandler)
 
-	//bill
-	billRepo := bill.NewBillRepository(db)
-	billSvc := bill.NewBillService(billRepo, txManager, walletRepo, categoryRepo, transactionSvc)
-	billHandler := handlers.NewBillHandler(billSvc)
-	RegisterBillRoutes(protectedGroup, billHandler)
-
 	//lender
 	lenderRepo := lender.NewLenderRepository(db)
 	lenderSvc := lender.NewLenderService(lenderRepo, txManager)
 	lenderHandler := handlers.NewLenderHandler(lenderSvc)
 	RegisterLenderRoutes(protectedGroup, lenderHandler)
+
+	//bill
+	billRepo := bill.NewBillRepository(db)
+	billSvc := bill.NewBillService(billRepo, txManager, walletRepo, categoryRepo, lenderRepo, transactionSvc)
+	billHandler := handlers.NewBillHandler(billSvc)
+	RegisterBillRoutes(protectedGroup, billHandler)
 
 	//report & dashboard
 	reportSvc := report.NewService(transactionSvc, billSvc, walletSvc, categorySvc, budgetSvc)

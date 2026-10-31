@@ -105,7 +105,12 @@ func (h *BudgetHandler) Copy(c *fiber.Ctx) error {
 		return base_response.Error(c, fiber.StatusBadRequest, "Body request tidak valid")
 	}
 
-	created, err := h.service.Copy(c.Context(), userID, payload.FromMonth, payload.ToMonth)
+	skipExisting := true
+	if payload.SkipExisting != nil {
+		skipExisting = *payload.SkipExisting
+	}
+
+	created, err := h.service.Copy(c.Context(), userID, payload.FromMonth, payload.ToMonth, skipExisting)
 	if err != nil {
 		return respondError(c, err)
 	}

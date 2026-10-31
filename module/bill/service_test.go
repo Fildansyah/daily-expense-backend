@@ -108,17 +108,17 @@ func TestPrepareBill(t *testing.T) {
 		dto     *entity.BillDTO
 		wantErr bool
 	}{
-		{"valid", &entity.BillDTO{Lender: "Kredivo", Amount: 100000, DueDate: today}, false},
-		{"lender kosong", &entity.BillDTO{Lender: "  ", Amount: 100000, DueDate: today}, true},
-		{"amount nol", &entity.BillDTO{Lender: "Kredivo", Amount: 0, DueDate: today}, true},
-		{"paid negatif", &entity.BillDTO{Lender: "Kredivo", Amount: 100000, PaidAmount: -1, DueDate: today}, true},
-		{"paid melebihi amount", &entity.BillDTO{Lender: "Kredivo", Amount: 100000, PaidAmount: 120000, DueDate: today}, true},
-		{"tanggal salah", &entity.BillDTO{Lender: "Kredivo", Amount: 100000, DueDate: "31-12-2026"}, true},
+		{"valid", &entity.BillDTO{LenderId: "Kredivo", Amount: 100000, DueDate: today}, false},
+		{"lender kosong", &entity.BillDTO{LenderId: "  ", Amount: 100000, DueDate: today}, true},
+		{"amount nol", &entity.BillDTO{LenderId: "Kredivo", Amount: 0, DueDate: today}, true},
+		{"paid negatif", &entity.BillDTO{LenderId: "Kredivo", Amount: 100000, PaidAmount: -1, DueDate: today}, true},
+		{"paid melebihi amount", &entity.BillDTO{LenderId: "Kredivo", Amount: 100000, PaidAmount: 120000, DueDate: today}, true},
+		{"tanggal salah", &entity.BillDTO{LenderId: "Kredivo", Amount: 100000, DueDate: "31-12-2026"}, true},
 		{"index cicilan melebihi total", &entity.BillDTO{
-			Lender: "Kredivo", Amount: 100000, DueDate: today,
+			LenderId: "Kredivo", Amount: 100000, DueDate: today,
 			InstallmentTotal: &installmentTotal, InstallmentIndex: &installmentIndex,
 		}, true},
-		{"bunga negatif", &entity.BillDTO{Lender: "Kredivo", Amount: 100000, DueDate: today, InterestRate: &interest}, true},
+		{"bunga negatif", &entity.BillDTO{LenderId: "Kredivo", Amount: 100000, DueDate: today, InterestRate: &interest}, true},
 	}
 
 	for _, tc := range cases {

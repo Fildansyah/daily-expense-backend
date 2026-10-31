@@ -10,7 +10,8 @@ type Bill struct {
 	concern.BaseFields
 
 	UserID     string
-	Lender     string
+	LenderId   string
+	Lender     *Lender `gorm:"foreignKey:LenderId;references:ID"`
 	Amount     float64
 	PaidAmount float64
 	DueDate    time.Time

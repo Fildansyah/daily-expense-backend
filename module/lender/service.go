@@ -66,10 +66,7 @@ func (s *LenderService) UpdateLender(ctx context.Context, userID, id, name strin
 			return fmt.Errorf("%w: lender dengan nama tersebut sudah ada", apperror.ErrConflict)
 		}
 
-		// bills.lender menyimpan nama sebagai teks, jadi ikut di-rename.
-		if err := s.repo.RenameBills(ctx, userID, existing.Name, name); err != nil {
-			return err
-		}
+		// Relasi bill -> lender memakai lender_id, jadi rename cukup di tabel lenders.
 		if err := s.repo.Update(ctx, &entity.LenderDTO{CommonDTOFields: entity.CommonDTOFields{ID: id}, UserID: userID, Name: name}); err != nil {
 			return err
 		}
@@ -90,7 +87,7 @@ func (s *LenderService) DeleteLender(ctx context.Context, userID, id string) err
 		return err
 	}
 
-	count, err := s.repo.CountBills(ctx, userID, existing.Name)
+	count, err := s.repo.CountBills(ctx, userID, existing.ID)
 	if err != nil {
 		return err
 	}

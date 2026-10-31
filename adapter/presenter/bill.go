@@ -8,7 +8,8 @@ import (
 
 type BillPresenter struct {
 	ID               string                        `json:"id"`
-	Lender           string                        `json:"lender"`
+	LenderId         string                        `json:"lenderId"`
+	Lender           *LenderPresenter              `json:"lender,omitempty"`
 	Amount           float64                       `json:"amount"`
 	PaidAmount       float64                       `json:"paidAmount"`
 	RemainingAmount  float64                       `json:"remainingAmount"`
@@ -39,7 +40,8 @@ func (v BillPresenter) FromDTO(dto *entity.BillDTO) *BillPresenter {
 
 	return &BillPresenter{
 		ID:               dto.ID,
-		Lender:           dto.Lender,
+		LenderId:         dto.LenderId,
+		Lender:           new(LenderPresenter).FromDTO(dto.Lender),
 		Amount:           dto.Amount,
 		PaidAmount:       dto.PaidAmount,
 		RemainingAmount:  dto.RemainingAmount,
@@ -93,11 +95,12 @@ func (v BillPaymentPresenter) FromDTO(dto *entity.BillPaymentDTO) *BillPaymentPr
 }
 
 type BillLenderSummaryPresenter struct {
-	Lender    string  `json:"lender"`
-	Count     int64   `json:"count"`
-	Total     float64 `json:"total"`
-	Paid      float64 `json:"paid"`
-	Remaining float64 `json:"remaining"`
+	LenderId  string           `json:"lenderId"`
+	Lender    *LenderPresenter `json:"lender"`
+	Count     int64            `json:"count"`
+	Total     float64          `json:"total"`
+	Paid      float64          `json:"paid"`
+	Remaining float64          `json:"remaining"`
 }
 
 type BillStatusSummaryPresenter struct {
@@ -137,7 +140,8 @@ func (v BillSummaryPresenter) FromDTO(dto *entity.BillSummaryDTO) *BillSummaryPr
 	perLender := make([]BillLenderSummaryPresenter, len(dto.PerLender))
 	for i, item := range dto.PerLender {
 		perLender[i] = BillLenderSummaryPresenter{
-			Lender:    item.Lender,
+			LenderId:  item.LenderId,
+			Lender:    new(LenderPresenter).FromDTO(item.Lender),
 			Count:     item.Count,
 			Total:     item.Total,
 			Paid:      item.Paid,

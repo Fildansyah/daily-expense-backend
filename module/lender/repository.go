@@ -97,19 +97,12 @@ func (r *LenderRepository) ExistsName(ctx context.Context, userID, name, exclude
 	return count > 0, nil
 }
 
-func (r *LenderRepository) CountBills(ctx context.Context, userID, lenderName string) (int64, error) {
+func (r *LenderRepository) CountBills(ctx context.Context, userID, lenderID string) (int64, error) {
 	var count int64
 	err := tx.DB(ctx, r.db).Model(&model.Bill{}).
-		Where("user_id = ? AND lender = ?", userID, lenderName).
+		Where("user_id = ? AND lender_id = ?", userID, lenderID).
 		Count(&count).Error
 	return count, err
-}
-
-func (r *LenderRepository) RenameBills(ctx context.Context, userID, oldName, newName string) error {
-	return tx.DB(ctx, r.db).
-		Model(&model.Bill{}).
-		Where("user_id = ? AND lender = ?", userID, oldName).
-		Update("lender", newName).Error
 }
 
 func (r *LenderRepository) findByID(db *gorm.DB, id, userID string, ownedOnly bool) (*entity.LenderDTO, error) {

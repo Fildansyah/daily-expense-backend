@@ -5,13 +5,14 @@ import "time"
 type BillDTO struct {
 	CommonDTOFields
 
-	UpdatedAt  time.Time `json:"updatedAt"`
-	UserID     string    `json:"-"`
-	Lender     string    `json:"lender"`
-	Amount     float64   `json:"amount"`
-	PaidAmount float64   `json:"paidAmount"`
-	DueDate    string    `json:"dueDate"`
-	Deskripsi  string    `json:"deskripsi"`
+	UpdatedAt  time.Time  `json:"updatedAt"`
+	UserID     string     `json:"-"`
+	LenderId   string     `json:"lenderId"`
+	Lender     *LenderDTO `json:"lender,omitempty"`
+	Amount     float64    `json:"amount"`
+	PaidAmount float64    `json:"paidAmount"`
+	DueDate    string     `json:"dueDate"`
+	Deskripsi  string     `json:"deskripsi"`
 
 	WalletId   *string `json:"walletId,omitempty"`
 	CategoryId *string `json:"categoryId,omitempty"`
@@ -37,7 +38,7 @@ type BillDTO struct {
 type BillFilter struct {
 	From     string
 	To       string
-	Lender   string
+	LenderId string
 	Status   string
 	WalletId string
 	Q        string
@@ -64,11 +65,12 @@ type BillPaymentDTO struct {
 }
 
 type BillLenderSummaryDTO struct {
-	Lender    string  `json:"lender"`
-	Count     int64   `json:"count"`
-	Total     float64 `json:"total"`
-	Paid      float64 `json:"paid"`
-	Remaining float64 `json:"remaining"`
+	LenderId  string     `json:"lenderId"`
+	Lender    *LenderDTO `json:"lender"`
+	Count     int64      `json:"count"`
+	Total     float64    `json:"total"`
+	Paid      float64    `json:"paid"`
+	Remaining float64    `json:"remaining"`
 }
 
 type BillStatusSummaryDTO struct {
