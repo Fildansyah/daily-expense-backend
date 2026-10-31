@@ -134,6 +134,10 @@ func (r *BillRepository) FindAll(ctx context.Context, userID string, filter enti
 		if filter.WalletId != "" {
 			query = query.Where("bills.wallet_id = ?", filter.WalletId)
 		}
+		if filter.Overdue {
+			today := parseDate(time.Now().UTC().Format(dateLayout))
+			query = query.Where("bills.due_date < ? AND bills.paid_amount < bills.amount", today)
+		}
 		if filter.Q != "" {
 			like := "%" + filter.Q + "%"
 			query = query.

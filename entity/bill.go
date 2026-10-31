@@ -41,6 +41,7 @@ type BillFilter struct {
 	LenderId string
 	Status   string
 	WalletId string
+	Overdue  bool
 	Q        string
 	Page     int
 	Limit    int

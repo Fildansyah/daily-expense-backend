@@ -48,6 +48,7 @@ func (h *BillHandler) GetBills(c *fiber.Ctx) error {
 		LenderId: c.Query("lenderId"),
 		Status:   c.Query("status"),
 		WalletId: c.Query("walletId"),
+		Overdue:  c.QueryBool("overdue", false),
 		Q:        c.Query("q"),
 		Page:     c.QueryInt("page", 1),
 		Limit:    c.QueryInt("limit", 20),
